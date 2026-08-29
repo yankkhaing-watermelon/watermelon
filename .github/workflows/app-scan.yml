@@ -1,0 +1,52 @@
+name: App Scan
+
+# Runs the scan, writes JSON, pushes it to the Worker, commits the signal log.
+# workflow_dispatch is what the app's "Run scan now" button triggers.
+on:
+  schedule:
+    - cron: "20 9 * * 1-5"   # 09:20 UTC = 17:20 MYT, just after Bursa close
+  workflow_dispatch:
+
+permissions:
+  contents: write            # needed to commit the app signal log
+
+concurrency:
+  group: app-scan
+  cancel-in-progress: false  # let a running scan finish rather than truncating it
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scan and publish
+        env:
+          MARKET: ${{ vars.MARKET || 'MYX' }}
+          WORKER_URL: ${{ secrets.WORKER_URL }}
+          PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+          MIN_UNIVERSE: ${{ vars.MIN_UNIVERSE || '800' }}
+          TV_MAX_WORKERS: ${{ vars.TV_MAX_WORKERS || '5' }}
+          TV_BARS: ${{ vars.TV_BARS || '300' }}
+          TV_CONNECT_GAP: ${{ vars.TV_CONNECT_GAP || '0.25' }}
+          TV_USERNAME: ${{ secrets.TV_USERNAME }}
+          TV_PASSWORD: ${{ secrets.TV_PASSWORD }}
+          PYTHONUNBUFFERED: "1"
+        run: python -u export_scan.py --publish
+
+      - name: Commit signal log
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add app_signals_*.csv .cache/bursa_universe.csv .cache/benchmark_klse.csv
+          git diff --staged --quiet || git commit -m "signals: $(date -u +%Y-%m-%d)"
+          git push
