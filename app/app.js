@@ -366,7 +366,19 @@
         : "");
 
     $("bt-updated").textContent = "Last run " + fmtTime(backtest.generated_at);
-    $("bt-note").textContent = backtest.note || "";
+    const totalTrades = (backtest.strategies || [])
+      .reduce((n, s) => n + Number(s.trades_total || 0), 0);
+    const scanDate = latest && new Date(latest.scan_date || latest.generated_at);
+    const testDate = backtest.date_to && new Date(backtest.date_to);
+    const stale = scanDate && testDate &&
+      Number.isFinite(scanDate.getTime()) && Number.isFinite(testDate.getTime()) &&
+      scanDate - testDate > 7 * 86400000;
+    const warning = totalTrades === 0
+      ? "This stored backtest contains zero trades and is not a current validation result. A live backtest producer has not been configured."
+      : stale
+        ? "This backtest is older than the current scan and may be stale."
+        : "";
+    $("bt-note").textContent = [warning, backtest.note || ""].filter(Boolean).join(" ");
     requestAnimationFrame(drawBtChart);
   }
 
