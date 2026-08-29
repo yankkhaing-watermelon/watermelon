@@ -1,6 +1,8 @@
 name: App Weekly Review
 
-# Evaluates how NEW signals actually performed and publishes the Weekly tab data.
+# Evaluates how NEW signals actually performed (Weekly tab) and rebuilds the
+# walk-forward backtest (Backtest tab). The two run as independent jobs so a
+# slow or failing backtest never blocks the weekly review publish.
 on:
   schedule:
     - cron: "30 10 * * 6"   # Saturday 10:30 UTC = 18:30 MYT
@@ -36,3 +38,34 @@ jobs:
           TV_PASSWORD: ${{ secrets.TV_PASSWORD }}
           PYTHONUNBUFFERED: "1"
         run: python export_review.py --publish
+
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120   # walk-forward over the liquid universe is heavier
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build and publish backtest
+        env:
+          MARKET: ${{ vars.MARKET || 'MYX' }}
+          WORKER_URL: ${{ secrets.WORKER_URL }}
+          PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+          TV_MAX_WORKERS: ${{ vars.TV_MAX_WORKERS || '5' }}
+          TV_BARS: ${{ vars.TV_BARS || '500' }}
+          TV_CONNECT_GAP: ${{ vars.TV_CONNECT_GAP || '0.25' }}
+          TV_USERNAME: ${{ secrets.TV_USERNAME }}
+          TV_PASSWORD: ${{ secrets.TV_PASSWORD }}
+          BT_MAX_SYMBOLS: ${{ vars.BT_MAX_SYMBOLS || '300' }}
+          BT_STEP_DAYS: ${{ vars.BT_STEP_DAYS || '5' }}
+          BT_LOOKBACK_YEARS: ${{ vars.BT_LOOKBACK_YEARS || '1.6' }}
+          BT_SPLIT: ${{ vars.BT_SPLIT || '0.70' }}
+          PYTHONUNBUFFERED: "1"
+        run: python export_backtest.py --publish
