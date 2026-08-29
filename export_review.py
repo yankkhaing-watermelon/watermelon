@@ -63,6 +63,9 @@ def run(publish: bool = False, send_telegram: bool | None = None) -> dict:
         "horizons": HORIZONS,
         "strategies": [],
         "overall": {},
+        "signals": [],
+        "signals_total": 0,
+        "signals_pending": 0,
         "equity_curve": [],
         "note": "Not enough signal history yet — needs a few more scan days.",
     }
@@ -85,6 +88,7 @@ def run(publish: bool = False, send_telegram: bool | None = None) -> dict:
                                    max_workers=config.UNIVERSE["max_workers"])
 
     per_strategy, all_r10, trade_rows = [], [], []
+    signal_rows = []  # every logged signal, pending or evaluated — drives the always-visible list
 
     ALL_STRATEGIES = ["trending", "early_uptrend", "reversal",
                       "gaining_momentum", "base_breakout", "meta_leader"]
@@ -97,9 +101,20 @@ def run(publish: bool = False, send_telegram: bool | None = None) -> dict:
 
         for _, row in s.iterrows():
             df = data.get(row["symbol"])
-            if df is None or df.empty:
-                continue
-            fr = forward_returns(row["date"], float(row["close"]), df)
+            fr = forward_returns(row["date"], float(row["close"]), df) if (df is not None and not df.empty) else {}
+
+            # Always record the signal for the always-visible list, even when it
+            # has no price data or no aged horizon yet (shows as pending).
+            hz_vals = {str(h): (round(fr[h], 1) if h in fr else None) for h in HORIZONS}
+            pending = all(v is None for v in hz_vals.values())
+            signal_rows.append({
+                "symbol": str(row["symbol"]),
+                "strategy": str(row["strategy"]),
+                "date": pd.Timestamp(row["date"]).strftime("%Y-%m-%d"),
+                "h": hz_vals,
+                "pending": pending,
+            })
+
             if not fr:
                 continue
             evaluated += 1
@@ -181,6 +196,9 @@ def run(publish: bool = False, send_telegram: bool | None = None) -> dict:
         "horizons": HORIZONS,
         "strategies": per_strategy,
         "overall": overall,
+        "signals": sorted(signal_rows, key=lambda r: r["date"], reverse=True),
+        "signals_total": len(signal_rows),
+        "signals_pending": sum(1 for r in signal_rows if r["pending"]),
         "equity_curve": equity,
         "note": "Live signal performance. Past results do not predict future "
                 "results — this is information, not financial advice.",
