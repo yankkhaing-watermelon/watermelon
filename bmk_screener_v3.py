@@ -52,7 +52,7 @@ class ScreenerConfig:
     min_history_bars: int = 300
     # A candidate must have a bar for the benchmark's last completed session.
     # This prevents halted/stale counters from being stamped as current.
-    max_stale_sessions: int = 0
+    max_stale_sessions: int = 1
     min_price: float = 0.30
     hard_min_median_turnover_20: float = 300_000.0
     preferred_median_turnover_20: float = 1_000_000.0
