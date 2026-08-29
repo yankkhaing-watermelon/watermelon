@@ -9,8 +9,8 @@
     trending: "Trend",
     early_uptrend: "Early",
     reversal: "Reversal",
-    gaining_momentum: "Gain",
-    base_breakout: "Break",
+    gaining_momentum: "Momentum",
+    base_breakout: "Breakout",
     meta_leader: "META",
   };
   // Full names for the detail header / weekly blocks where there's room.
