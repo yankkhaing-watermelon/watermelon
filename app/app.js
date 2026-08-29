@@ -280,16 +280,71 @@
         ? `+${n}d: ${h[n].win_rate}% win · avg ${h[n].avg > 0 ? "+" : ""}${h[n].avg}% (n=${h[n].n})`
         : null;
       const parts = [5, 10, 20].map(line).filter(Boolean);
+      const header = s.signals > 0
+        ? `${s.signals} new signals`
+        : (s.signals_logged > 0
+            ? `${s.signals_logged} pending`
+            : "no signals yet");
+      const bw = (s.best && s.best.symbol && s.worst && s.worst.symbol)
+        ? `<p class="l">best ${esc(s.best.symbol)} ${s.best.ret > 0 ? "+" : ""}${s.best.ret}% ·
+             worst ${esc(s.worst.symbol)} ${s.worst.ret > 0 ? "+" : ""}${s.worst.ret}%</p>`
+        : "";
+      const body = parts.length
+        ? parts.map((p) => `<p class="l">${p}</p>`).join("") + bw
+        : `<p class="l" style="color:var(--faint)">Awaiting forward returns — fills in as signals age.</p>`;
       return `<div class="strat-block">
-        <h3>${LABELS_FULL[s.strategy] || LABELS[s.strategy] || s.strategy} — ${s.signals} new signals</h3>
-        ${parts.map((p) => `<p class="l">${p}</p>`).join("")}
-        <p class="l">best ${esc(s.best.symbol)} ${s.best.ret > 0 ? "+" : ""}${s.best.ret}% ·
-           worst ${esc(s.worst.symbol)} ${s.worst.ret > 0 ? "+" : ""}${s.worst.ret}%</p>
+        <h3>${LABELS_FULL[s.strategy] || LABELS[s.strategy] || s.strategy} — ${header}</h3>
+        ${body}
       </div>`;
     }).join("") || `<p class="empty">${esc(weekly.note || "No review data yet.")}</p>`;
 
     $("w-note").textContent = weekly.note || "";
+    renderWeeklySignals();
     if (view === "weekly") C.line($("w-chart"), weekly.equity_curve || []);
+  }
+
+  let wSort = "newest";
+  function renderWeeklySignals() {
+    if (!$("w-signals")) return;
+    const sig = (weekly.signals || []).slice();
+    const total = weekly.signals_total || sig.length;
+    const pend = weekly.signals_pending || 0;
+    if (!sig.length) {
+      $("w-sig-meta").textContent = "";
+      $("w-sort").innerHTML = "";
+      $("w-signals").innerHTML =
+        `<p class="empty">No signals logged yet. Run a scan to populate this list.</p>`;
+      return;
+    }
+    $("w-sig-meta").textContent = `Signals · ${total}` + (pend ? ` · ${pend} still pending` : "");
+    const sorts = [["newest", "Newest"], ["best", "Best +10d"], ["worst", "Worst +10d"], ["pending", "Pending first"]];
+    $("w-sort").innerHTML = sorts.map(([k, l]) =>
+      `<button class="chip${k === wSort ? " on" : ""}" data-s="${k}">${l}</button>`).join("");
+    $("w-sort").querySelectorAll(".chip").forEach((c) =>
+      c.onclick = () => { wSort = c.dataset.s; renderWeeklySignals(); });
+
+    const g10 = (r) => (r.h && r.h["10"] != null) ? r.h["10"] : null;
+    if (wSort === "newest") sig.sort((a, b) => (a.date < b.date ? 1 : -1));
+    if (wSort === "best") sig.sort((a, b) => (g10(b) ?? -1e9) - (g10(a) ?? -1e9));
+    if (wSort === "worst") sig.sort((a, b) => (g10(a) ?? 1e9) - (g10(b) ?? 1e9));
+    if (wSort === "pending") sig.sort((a, b) => (b.pending ? 1 : 0) - (a.pending ? 1 : 0));
+
+    const cell = (v) => v == null
+      ? `<span style="color:var(--faint)">–</span>`
+      : `<span class="${v > 0 ? "up" : v < 0 ? "down" : ""}">${v > 0 ? "+" : ""}${v}%</span>`;
+    $("w-signals").innerHTML = sig.map((r) => `
+      <div class="sig-row">
+        <div class="sig-top">
+          <span class="sig-sym">${esc(r.symbol)}${r.pending ? '<span class="badge">PENDING</span>' : ""}</span>
+          <span class="sig-date">${esc(r.date)}</span>
+        </div>
+        <div class="sig-sub">${LABELS[r.strategy] || r.strategy}</div>
+        <div class="sig-h">
+          <span>5d ${cell(r.h && r.h["5"])}</span>
+          <span>10d ${cell(r.h && r.h["10"])}</span>
+          <span>20d ${cell(r.h && r.h["20"])}</span>
+        </div>
+      </div>`).join("");
   }
 
   // --------------------------------------------------------------- backtest
