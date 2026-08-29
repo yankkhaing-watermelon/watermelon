@@ -32,6 +32,12 @@ header h1{margin:0;font-size:16px;font-weight:600;letter-spacing:-.01em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .icon-btn{background:none;border:0;color:var(--muted);font-size:19px;cursor:pointer;
   padding:4px;line-height:1}
+.run-top{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:12.5px;
+  font-weight:600;color:#fff;background:var(--accent);border:0;border-radius:8px;
+  padding:6px 13px;cursor:pointer;transition:opacity .12s,transform .1s}
+.run-top:active{transform:scale(.96)}
+.run-top:disabled{opacity:.5;cursor:default}
+.header-actions{display:flex;align-items:center;gap:8px}
 main{flex:1;padding:12px 16px 0;overflow-x:hidden}
 .meta{margin:0 0 6px;font-size:12px;color:var(--muted)}
 .banner{display:none;margin:0 0 10px;padding:8px 12px;border-radius:var(--radius);
@@ -63,14 +69,20 @@ main{flex:1;padding:12px 16px 0;overflow-x:hidden}
 .scroller::-webkit-scrollbar{display:none}
 .empty{padding:32px 0;text-align:center;color:var(--muted);font-size:13px}
 
-.chips{display:flex;gap:5px;overflow-x:auto;padding:8px 0 9px;scrollbar-width:none}
-.chips::-webkit-scrollbar{display:none}
-.chip{font-size:11px;padding:3px 9px;border-radius:var(--radius);white-space:nowrap;
-  border:.5px solid var(--line);color:var(--muted);background:none;cursor:pointer;
-  font-family:inherit}
+.chips{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;padding:10px 0 4px}
+.chip{font-size:10px;padding:6px 1px;border-radius:9px;white-space:nowrap;
+  display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.15;
+  border:.5px solid var(--line);color:var(--muted);background:var(--card);cursor:pointer;
+  font-family:inherit;transition:background .12s,color .12s,border-color .12s;overflow:hidden}
+.chip:active{transform:scale(.96)}
 .chip.on{background:var(--accent-bg);color:var(--accent);border-color:transparent;
   font-weight:600}
-.chip .n{opacity:.65;margin-left:3px}
+.chip .n{font-size:12px;font-weight:700;opacity:1;margin:0}
+/* bt-chips (Backtest tab) keeps the original horizontal pill row */
+.bt-chips-row{display:flex;gap:5px;overflow-x:auto;padding:8px 0 9px;scrollbar-width:none}
+.bt-chips-row::-webkit-scrollbar{display:none}
+.bt-chips-row .chip{flex-direction:row;padding:3px 9px;border-radius:var(--radius);font-size:11px}
+.bt-chips-row .chip .n{margin-left:3px;font-size:11px}
 
 .primary{width:100%;margin-bottom:14px;padding:11px;border-radius:var(--radius);
   border:.5px solid var(--line);background:none;color:var(--text);font:inherit;
@@ -149,7 +161,10 @@ nav svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;
 <div id="app">
   <header>
     <h1 id="title">BursaMusangKing</h1>
-    <button class="icon-btn" id="theme" aria-label="Toggle dark mode">◐</button>
+    <div class="header-actions">
+      <button class="run-top" id="run">▶ Run</button>
+      <button class="icon-btn" id="theme" aria-label="Toggle dark mode">◐</button>
+    </div>
   </header>
 
   <main>
@@ -161,7 +176,6 @@ nav svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;
       <div class="scroller"><div id="list"></div></div>
       <p class="meta" id="updated" style="text-align:center;margin:8px 0"></p>
       <div class="chips" id="chips"></div>
-      <button class="primary" id="run">▶ Run scan now</button>
     </section>
 
     <!-- ============ detail view ============ -->
@@ -196,7 +210,7 @@ nav svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;
     <!-- ============ backtest view ============ -->
     <section id="view-backtest" hidden>
       <p class="meta" id="bt-meta"></p>
-      <div class="chips" id="bt-chips"></div>
+      <div class="chips bt-chips-row" id="bt-chips"></div>
       <div id="bt-verdict"></div>
       <p class="meta" style="margin:0 0 5px">Tap a test figure to see the trades behind it</p>
       <div class="bt-tbl">

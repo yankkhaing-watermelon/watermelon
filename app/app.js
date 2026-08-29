@@ -6,12 +6,21 @@
   const C = window.BMKChart;
 
   const LABELS = {
-    trending: "Trending",
-    early_uptrend: "Early uptrend",
+    trending: "Trend",
+    early_uptrend: "Early",
     reversal: "Reversal",
-    gaining_momentum: "Gaining momentum",
-    base_breakout: "Base breakout",
-    meta_leader: "META leader",
+    gaining_momentum: "Momentum",
+    base_breakout: "Breakout",
+    meta_leader: "META",
+  };
+  // Full names for the detail header / weekly blocks where there's room.
+  const LABELS_FULL = {
+    trending: "Trending",
+    early_uptrend: "Early Uptrend",
+    reversal: "Confirmed Reversal",
+    gaining_momentum: "Gaining Momentum",
+    base_breakout: "Base Breakout",
+    meta_leader: "M.E.T.A. Leader",
   };
   const STRATEGY_ORDER = Object.keys(LABELS);
 
@@ -271,7 +280,7 @@
         : null;
       const parts = [5, 10, 20].map(line).filter(Boolean);
       return `<div class="strat-block">
-        <h3>${LABELS[s.strategy] || s.strategy} — ${s.signals} new signals</h3>
+        <h3>${LABELS_FULL[s.strategy] || LABELS[s.strategy] || s.strategy} — ${s.signals} new signals</h3>
         ${parts.map((p) => `<p class="l">${p}</p>`).join("")}
         <p class="l">best ${esc(s.best.symbol)} ${s.best.ret > 0 ? "+" : ""}${s.best.ret}% ·
            worst ${esc(s.worst.symbol)} ${s.worst.ret > 0 ? "+" : ""}${s.worst.ret}%</p>
