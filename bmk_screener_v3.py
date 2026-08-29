@@ -17,6 +17,7 @@ be validated with point-in-time, survivorship-aware, next-session backtests.
 """
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import asdict, dataclass, field
 from typing import Any, Iterable, Mapping, Sequence
 import math
@@ -49,6 +50,9 @@ class ScreenerConfig:
     # Point-in-time data and tradability gates.
     # V3.1 keeps hard safety gates but uses Bursa-appropriate liquidity floors.
     min_history_bars: int = 300
+    # A candidate must have a bar for the benchmark's last completed session.
+    # This prevents halted/stale counters from being stamped as current.
+    max_stale_sessions: int = 0
     min_price: float = 0.30
     hard_min_median_turnover_20: float = 300_000.0
     preferred_median_turnover_20: float = 1_000_000.0
@@ -212,11 +216,17 @@ def _clean_frame(df: pd.DataFrame, as_of: Any | None = None) -> pd.DataFrame:
         raise ValueError(f"Missing OHLCV columns: {sorted(missing)}")
     out = out[["open", "high", "low", "close", "volume"]]
     out = out.apply(pd.to_numeric, errors="coerce")
-    out.index = pd.to_datetime(out.index, errors="coerce")
+    index = pd.to_datetime(out.index, errors="coerce")
+    if getattr(index, "tz", None) is not None:
+        index = index.tz_localize(None)
+    out.index = index.normalize()
     out = out[~out.index.isna()].sort_index()
     out = out[~out.index.duplicated(keep="last")]
     if as_of is not None:
-        out = out.loc[out.index <= pd.Timestamp(as_of)]
+        cutoff = pd.Timestamp(as_of)
+        if cutoff.tzinfo is not None:
+            cutoff = cutoff.tz_localize(None)
+        out = out.loc[out.index <= cutoff.normalize()]
     out = out.dropna(subset=["open", "high", "low", "close"])
     out["volume"] = out["volume"].fillna(0.0).clip(lower=0.0)
     valid = (
@@ -545,13 +555,34 @@ def _feature_row(
     metadata: Mapping[str, Any],
     cfg: ScreenerConfig,
     as_of: Any | None,
+    reject_reason: list[str] | None = None,
 ) -> dict[str, Any] | None:
+    def reject(reason: str) -> None:
+        if reject_reason is not None:
+            reject_reason.append(reason)
+        return None
+
     e = enrich(raw, as_of=as_of)
+    # screen_universe supplies this pre-enriched. Keeping a defensive fallback
+    # makes the private helper safe for direct callers without recalculating
+    # the same benchmark indicators once per Bursa counter.
+    benchmark_full = benchmark if "sma200" in benchmark.columns else enrich(benchmark, as_of=as_of)
+    if benchmark_full.empty:
+        return reject("benchmark_empty")
+    # The benchmark defines the latest completed Bursa session. This drops a
+    # forming TradingView daily bar during a manual intraday run.
+    benchmark_last = benchmark_full.index[-1]
+    e = e.loc[e.index <= benchmark_last]
     if len(e) < cfg.min_history_bars:
-        return None
-    b = enrich(benchmark, as_of=as_of).reindex(e.index).ffill().dropna(subset=["close"])
+        return reject("insufficient_history")
+    benchmark_sessions = benchmark_full.index[benchmark_full.index <= benchmark_last]
+    stock_last = e.index[-1]
+    stale_sessions = int((benchmark_sessions > stock_last).sum())
+    if stale_sessions > cfg.max_stale_sessions:
+        return reject("stale_or_halted")
+    b = benchmark_full.reindex(e.index).ffill().dropna(subset=["close"])
     if len(b) < 273:
-        return None
+        return reject("benchmark_alignment")
     z = e.iloc[-1]
     residual = _residual_momentum(e, b)
     close = float(z.close)
@@ -1082,16 +1113,23 @@ def screen_universe(
         diagnostics.clear()
 
     regime = market_regime(benchmark, prices, config=cfg, as_of=as_of)
+    feature_benchmark = enrich(benchmark, as_of=as_of)
     rows: list[dict[str, Any]] = []
     feature_errors = 0
     feature_rejected = 0
+    feature_rejection_counts: Counter[str] = Counter()
     for symbol, raw in prices.items():
         try:
-            row = _feature_row(symbol, raw, benchmark, metadata.get(symbol, {}), cfg, as_of)
+            reason: list[str] = []
+            row = _feature_row(
+                symbol, raw, feature_benchmark, metadata.get(symbol, {}), cfg, as_of,
+                reject_reason=reason,
+            )
             if row is not None:
                 rows.append(row)
             else:
                 feature_rejected += 1
+                feature_rejection_counts.update(reason or ["unknown"])
         except (ValueError, TypeError, KeyError, IndexError, np.linalg.LinAlgError, FloatingPointError):
             feature_errors += 1
 
@@ -1100,6 +1138,7 @@ def screen_universe(
         "input_stocks": len(prices),
         "feature_eligible": len(rows),
         "feature_rejected": feature_rejected,
+        "feature_rejections": dict(feature_rejection_counts.most_common()),
         "feature_errors": feature_errors,
         "market_regime": asdict(regime),
         "config": {
@@ -1137,7 +1176,6 @@ def screen_universe(
         universe["sector_pctile"] = 50.0
         universe["sector_available"] = False
 
-    from collections import Counter
     tradability_rejections: Counter[str] = Counter()
     tradable_count = 0
     for _, row in universe.iterrows():

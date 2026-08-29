@@ -1,6 +1,7 @@
 """Discover the current Bursa equity universe through TradingView's scanner."""
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
 
 import pandas as pd
@@ -56,7 +57,9 @@ def _request() -> pd.DataFrame:
     return frame
 
 
+@lru_cache(maxsize=1)
 def get_universe() -> pd.DataFrame:
+    """Return one consistent universe snapshot for the lifetime of a run."""
     try:
         return _request()
     except Exception:

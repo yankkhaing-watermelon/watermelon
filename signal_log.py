@@ -1,7 +1,7 @@
 """Episode-based signal history used by the V5.1 browser exporter."""
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -53,5 +53,10 @@ def update(signals: list[dict]) -> tuple[int, list[dict]]:
         combined = pd.concat([old, pd.DataFrame(rows)], ignore_index=True)
     else:
         combined = pd.DataFrame(rows, columns=COLUMNS)
+    # Keep the operational log bounded. Git retains previous versions, so an
+    # ever-growing inactive history here only slows scans and bloats commits.
+    dates = pd.to_datetime(combined["date"], errors="coerce")
+    cutoff = pd.Timestamp(date.today() - timedelta(days=180))
+    combined = combined.loc[dates.ge(cutoff) | combined["active"].astype(str).isin({"1", "True", "true"})]
     combined.to_csv(PATH, index=False)
     return new_count, rows

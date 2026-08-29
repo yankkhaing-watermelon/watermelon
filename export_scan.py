@@ -5,10 +5,12 @@ import argparse
 import json
 import math
 import os
+import time
 from collections import defaultdict
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import requests
@@ -22,6 +24,7 @@ from universe import get_universe
 OUT = Path(os.environ.get("PUBLIC_DIR", "public"))
 BENCHMARK_SYMBOL = os.environ.get("BENCHMARK_SYMBOL", "^KLSE")
 DETAIL_BARS = int(os.environ.get("DETAIL_BARS", "130"))
+BENCHMARK_CACHE = Path(".cache/benchmark_klse.csv")
 
 
 def _finite(value: Any, default: float = 0.0) -> float:
@@ -45,8 +48,13 @@ def _normalise_frame(df: pd.DataFrame) -> pd.DataFrame:
     if not set(required).issubset(out.columns):
         return pd.DataFrame()
     out = out[required].apply(pd.to_numeric, errors="coerce")
-    out.index = pd.to_datetime(out.index, errors="coerce")
-    return out.loc[~out.index.isna()].sort_index().dropna(subset=["open", "high", "low", "close"])
+    index = pd.to_datetime(out.index, errors="coerce")
+    if getattr(index, "tz", None) is not None:
+        index = index.tz_localize(None)
+    out.index = index.normalize()
+    out = out.loc[~out.index.isna()].sort_index()
+    out = out.loc[~out.index.duplicated(keep="last")]
+    return out.dropna(subset=["open", "high", "low", "close"])
 
 
 def _num(value: Any, digits: int = 3) -> float | None:
@@ -69,13 +77,39 @@ def _series(frame: pd.DataFrame, bars: int) -> dict[str, list]:
     return out
 
 
-def _fetch_benchmark() -> pd.DataFrame:
-    raw = yf.download(BENCHMARK_SYMBOL, period="2y", interval="1d", auto_adjust=True,
-                      progress=False, threads=False, timeout=30)
-    frame = _normalise_frame(raw)
-    if len(frame) < 275:
-        raise RuntimeError(f"Benchmark {BENCHMARK_SYMBOL} returned only {len(frame)} usable bars")
+def _drop_forming_session(frame: pd.DataFrame, now: datetime | None = None) -> pd.DataFrame:
+    """Exclude today's forming bar before Bursa's regular session is complete."""
+    local = (now or datetime.now(timezone.utc)).astimezone(ZoneInfo("Asia/Kuala_Lumpur"))
+    if local.weekday() < 5 and local.time() < datetime.strptime("17:00", "%H:%M").time():
+        return frame.loc[frame.index < pd.Timestamp(local.date())]
     return frame
+
+
+def _fetch_benchmark() -> pd.DataFrame:
+    last_error: Exception | None = None
+    for attempt in range(3):
+        try:
+            raw = yf.download(
+                BENCHMARK_SYMBOL, period="2y", interval="1d", auto_adjust=False,
+                progress=False, threads=False, timeout=30,
+            )
+            frame = _drop_forming_session(_normalise_frame(raw))
+            if len(frame) < 275:
+                raise RuntimeError(f"only {len(frame)} usable bars")
+            BENCHMARK_CACHE.parent.mkdir(parents=True, exist_ok=True)
+            frame.to_csv(BENCHMARK_CACHE)
+            return frame
+        except Exception as exc:
+            last_error = exc
+            if attempt < 2:
+                time.sleep(3 * (attempt + 1))
+    if BENCHMARK_CACHE.exists():
+        cached = pd.read_csv(BENCHMARK_CACHE, index_col=0, parse_dates=True)
+        frame = _drop_forming_session(_normalise_frame(cached))
+        if len(frame) >= 275:
+            print(f"Benchmark live fetch failed; using {len(frame)} cached bars")
+            return frame
+    raise RuntimeError(f"Benchmark {BENCHMARK_SYMBOL} unavailable: {last_error}")
 
 
 def _metadata() -> dict[str, dict[str, str]]:

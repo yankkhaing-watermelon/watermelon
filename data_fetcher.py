@@ -22,11 +22,12 @@ import config
 from universe import get_universe
 
 MIN_BARS = int(os.environ.get("MIN_PRICE_BARS", "275"))
-TV_BARS = int(os.environ.get("TV_BARS", "500"))
+TV_BARS = int(os.environ.get("TV_BARS", "300"))
 YF_RETRY_WAIT = float(os.environ.get("YF_RETRY_WAIT", "20"))
-TV_CONNECT_GAP = float(os.environ.get("TV_CONNECT_GAP", "0.45"))
+TV_CONNECT_GAP = float(os.environ.get("TV_CONNECT_GAP", "0.25"))
 _tv_connect_lock = threading.Lock()
 _tv_next_connect = 0.0
+_tv_thread = threading.local()
 
 
 def _normalise(raw: pd.DataFrame) -> pd.DataFrame:
@@ -45,13 +46,18 @@ def _normalise(raw: pd.DataFrame) -> pd.DataFrame:
     index = pd.to_datetime(frame.index, errors="coerce")
     if getattr(index, "tz", None) is not None:
         index = index.tz_localize(None)
-    frame.index = index
-    return frame.loc[~frame.index.isna()].sort_index().dropna(
+    # Daily bars from tvDatafeed commonly carry an exchange time while Yahoo
+    # daily bars use midnight.  The screener joins by trading session, not by
+    # the vendor's timestamp representation.
+    frame.index = index.normalize()
+    frame = frame.loc[~frame.index.isna()].sort_index()
+    frame = frame.loc[~frame.index.duplicated(keep="last")]
+    return frame.dropna(
         subset=["open", "high", "low", "close"]
     )
 
 
-def _tv_client() -> tuple[Any, Any]:
+def _new_tv_client() -> tuple[Any, Any]:
     try:
         from tvDatafeed import Interval, TvDatafeed
     except ImportError as exc:
@@ -60,7 +66,17 @@ def _tv_client() -> tuple[Any, Any]:
             "git+https://github.com/rongardF/tvdatafeed.git"
         ) from exc
     logging.getLogger("tvDatafeed.main").setLevel(logging.CRITICAL)
-    return TvDatafeed(), Interval
+    username = os.environ.get("TV_USERNAME")
+    password = os.environ.get("TV_PASSWORD")
+    client = TvDatafeed(username, password) if username and password else TvDatafeed()
+    return client, Interval
+
+
+def _tv_client(reset: bool = False) -> tuple[Any, Any]:
+    """Reuse one client per worker thread; recreate it only after a failure."""
+    if reset or not hasattr(_tv_thread, "client"):
+        _tv_thread.client, _tv_thread.interval = _new_tv_client()
+    return _tv_thread.client, _tv_thread.interval
 
 
 def _pace_tradingview_connection() -> None:
@@ -79,9 +95,9 @@ def _fetch_tradingview_symbol(row: dict[str, str]) -> pd.DataFrame:
     for attempt in range(4):
         try:
             _pace_tradingview_connection()
-            # tvDatafeed creates a new WebSocket inside get_hist(). A fresh
-            # object gives every retry new chart and quote session IDs.
-            client, interval = _tv_client()
+            # Keep the anonymous/login handshake per thread on the happy path.
+            # A retry gets a fresh client and fresh session IDs.
+            client, interval = _tv_client(reset=attempt > 0)
             raw = client.get_hist(
                 symbol=row["tv_code"],
                 exchange=row.get("tv_exchange") or "MYX",
@@ -232,7 +248,10 @@ def _yahoo_fallback(rows: list[dict[str, str]]) -> dict[str, pd.DataFrame]:
             try:
                 raw = yf.download(
                     tickers=yahoo_symbols, period="2y", interval="1d",
-                    auto_adjust=True, progress=False, group_by="ticker",
+                    # TradingView is the primary source and supplies raw OHLC.
+                    # Keep Yahoo fallback raw too so cross-sectional momentum
+                    # never mixes adjusted and unadjusted price conventions.
+                    auto_adjust=False, progress=False, group_by="ticker",
                     threads=False, timeout=30,
                 )
                 downloaded = _split_yahoo(raw, yahoo_symbols)
