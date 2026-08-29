@@ -83,6 +83,16 @@ main{flex:1;padding:12px 16px 0;overflow-x:hidden}
 .bt-chips-row::-webkit-scrollbar{display:none}
 .bt-chips-row .chip{flex-direction:row;padding:3px 9px;border-radius:var(--radius);font-size:11px}
 .bt-chips-row .chip .n{margin-left:3px;font-size:11px}
+/* two-way exit-policy toggle on the Backtest tab */
+.seg-toggle{display:flex;gap:0;margin:2px 0 12px;background:var(--card);
+  border:.5px solid var(--line);border-radius:10px;padding:3px}
+.seg{flex:1;font:inherit;font-size:12.5px;font-weight:600;padding:8px 6px;border:0;
+  border-radius:7px;background:none;color:var(--muted);cursor:pointer;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;transition:background .12s,color .12s}
+.seg.on{background:var(--accent);color:#fff}
+/* keep screener chips from ever clipping their text */
+.chips .chip{min-width:0}
+.chips .chip,.chips .chip .n{max-width:100%;text-overflow:ellipsis}
 
 .primary{width:100%;margin-bottom:14px;padding:11px;border-radius:var(--radius);
   border:.5px solid var(--line);background:none;color:var(--text);font:inherit;
@@ -211,6 +221,7 @@ nav svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;
     <section id="view-backtest" hidden>
       <p class="meta" id="bt-meta"></p>
       <div class="chips bt-chips-row" id="bt-chips"></div>
+      <div class="seg-toggle" id="bt-toggle" style="display:none"></div>
       <div id="bt-verdict"></div>
       <p class="meta" style="margin:0 0 5px">Tap a test figure to see the trades behind it</p>
       <div class="bt-tbl">

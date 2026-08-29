@@ -25,6 +25,7 @@
   const STRATEGY_ORDER = Object.keys(LABELS);
 
   let latest = null, weekly = null, backtest = null;
+  let btPolicy = null;
   let btStrat = null, btOpen = null;
   const historyCache = {};
   let filter = null, current = null, view = "list";
@@ -320,22 +321,44 @@
       </button>`).join("");
     $("bt-chips").querySelectorAll(".chip").forEach((c) => {
       c.onclick = () => {
-        btStrat = c.dataset.s; btOpen = null;
+        btStrat = c.dataset.s; btOpen = null; btPolicy = null;
         closeTrades(); renderBacktest();
       };
     });
 
     if (!cur) return;
-    const v = cur.verdict || {};
+
+    // Exit-policy toggle: cur.policies holds both exits; default to chosen_policy.
+    const policies = cur.policies || null;
+    if (policies && !btPolicy) btPolicy = cur.chosen_policy || Object.keys(policies)[0];
+    const view = policies && btPolicy && policies[btPolicy] ? policies[btPolicy] : cur;
+
+    if (policies) {
+      const order = (backtest.exit_policies || []).map((e) => e.key)
+        .filter((k) => policies[k]);
+      const keys = order.length ? order : Object.keys(policies);
+      $("bt-toggle").innerHTML = keys.map((k) => `
+        <button class="seg${k === btPolicy ? " on" : ""}" data-p="${k}">
+          ${esc(policies[k].label || k)}</button>`).join("");
+      $("bt-toggle").style.display = "";
+      $("bt-toggle").querySelectorAll(".seg").forEach((b) => {
+        b.onclick = () => { btPolicy = b.dataset.p; btOpen = null; closeTrades(); renderBacktest(); };
+      });
+    } else {
+      $("bt-toggle").style.display = "none";
+    }
+
+    const v = view.verdict || cur.verdict || {};
     $("bt-verdict").innerHTML = v.text
       ? `<div class="verdict v-${v.level || "thin"}"><span>${LEVEL_ICON[v.level] || "·"}</span><span>${esc(v.text)}</span></div>`
       : "";
 
-    const tr = cur.train || {}, te = cur.test || {};
+    const tr = view.train || {}, te = view.test || {};
     const pct = (x) => (x == null ? "–" : x + "%");
     const num = (x) => (x == null ? "–" : x);
     const rows = [
       { k: "win", l: "Win rate", tr: pct(tr.win_rate), te: pct(te.win_rate), tap: 1 },
+      { k: "lose", l: "Loss rate", tr: pct(tr.loss_rate), te: pct(te.loss_rate), tap: 1 },
       { k: null, l: "Profit factor", tr: num(tr.profit_factor), te: num(te.profit_factor) },
       { k: "all", l: "Avg return", tr: pct(tr.avg), te: pct(te.avg), tap: 1 },
       { k: "lose", l: "Worst trade", tr: pct(tr.worst), te: pct(te.worst), tap: 1 },
@@ -358,7 +381,7 @@
       };
     });
 
-    const mdd = cur.max_drawdown;
+    const mdd = view.max_drawdown;
     const card = (l, val) => `<div class="c"><p>${l}</p><p>${val}</p></div>`;
     $("bt-cards").innerHTML =
       card("Max drawdown", mdd == null ? "–" : mdd + "%") +
@@ -394,7 +417,8 @@
   function drawBtChart() {
     const cur = btCurrent();
     if (!cur) return;
-    const eq = cur.equity || {};
+    const pol = (cur.policies && btPolicy && cur.policies[btPolicy]) ? cur.policies[btPolicy] : cur;
+    const eq = pol.equity || {};
     C.split($("bt-chart"), eq.train || [], eq.test || []);
   }
 
@@ -403,7 +427,8 @@
     if (!cur) return;
     // Only test trades are offered — train trades are the in-sample half the
     // strategy was tuned against, so inspecting them tells you nothing useful.
-    let rows = (cur.trades || []).filter((t) => t.p === "test");
+    const pol = (cur.policies && btPolicy && cur.policies[btPolicy]) ? cur.policies[btPolicy] : cur;
+    let rows = (pol.trades || []).filter((t) => t.p === "test");
     let title = "All test trades";
     if (kind === "win") { rows = rows.filter((t) => t.r > 0); title = "Winning trades"; }
     if (kind === "lose") {
@@ -421,9 +446,9 @@
         </div>`).join("")
       : `<p class="empty">No trades in this bucket.</p>`;
 
-    const capped = (cur.test || {}).trades > rows.length && kind === "all";
+    const capped = ((pol.test || cur.test) || {}).trades > rows.length && kind === "all";
     $("tl-note").textContent = capped
-      ? `Showing ${rows.length} most recent of ${(cur.test || {}).trades}`
+      ? `Showing ${rows.length} most recent of ${((pol.test || cur.test) || {}).trades}`
       : `${rows.length} trade${rows.length === 1 ? "" : "s"}`;
 
     const panel = $("bt-panel");
