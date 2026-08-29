@@ -86,7 +86,9 @@ def run(publish: bool = False, send_telegram: bool | None = None) -> dict:
 
     per_strategy, all_r10, trade_rows = [], [], []
 
-    for strat in sorted(log["strategy"].unique()):
+    ALL_STRATEGIES = ["trending", "early_uptrend", "reversal",
+                      "gaining_momentum", "base_breakout", "meta_leader"]
+    for strat in ALL_STRATEGIES:
         s = log[log["strategy"] == strat]
         buckets = {h: [] for h in HORIZONS}
         open_rets, evaluated = [], 0
@@ -109,17 +111,23 @@ def run(publish: bool = False, send_telegram: bool | None = None) -> dict:
             if not got:
                 open_rets.append(fr["latest"])
 
-            r10 = fr.get(10, fr["latest"])
-            all_r10.append(r10)
-            trade_rows.append({"date": pd.Timestamp(row["date"]).strftime("%Y-%m-%d"),
-                               "ret": r10})
-            if best["ret"] is None or r10 > best["ret"]:
-                best = {"symbol": row["symbol"], "ret": round(r10, 1)}
-            if worst["ret"] is None or r10 < worst["ret"]:
-                worst = {"symbol": row["symbol"], "ret": round(r10, 1)}
+            # Use the shortest COMPLETED horizon for the overall summary, so the
+            # top cards populate as soon as 5d returns exist and stay consistent
+            # with the per-strategy blocks (which also key off completed horizons).
+            completed = [h for h in HORIZONS if h in fr]
+            r_summary = fr[completed[0]] if completed else None
+            if r_summary is not None:
+                all_r10.append(r_summary)
+                trade_rows.append({"date": pd.Timestamp(row["date"]).strftime("%Y-%m-%d"),
+                                   "ret": r_summary})
+                if best["ret"] is None or r_summary > best["ret"]:
+                    best = {"symbol": row["symbol"], "ret": round(r_summary, 1)}
+                if worst["ret"] is None or r_summary < worst["ret"]:
+                    worst = {"symbol": row["symbol"], "ret": round(r_summary, 1)}
 
-        if evaluated == 0:
-            continue
+        # Always emit a block, even with no evaluable signals yet, so all six
+        # strategies are visible. total_logged counts signals awaiting history.
+        total_logged = int(len(s))
 
         horizons = {}
         for h in HORIZONS:
@@ -136,11 +144,13 @@ def run(publish: bool = False, send_telegram: bool | None = None) -> dict:
         per_strategy.append({
             "strategy": strat,
             "signals": evaluated,
+            "signals_logged": total_logged,
+            "pending": int(max(0, total_logged - evaluated)),
             "horizons": horizons,
             "open": {"n": len(open_rets),
                      "avg": round(float(pd.Series(open_rets).mean()), 2)} if open_rets else None,
-            "best": best,
-            "worst": worst,
+            "best": best if best["symbol"] else None,
+            "worst": worst if worst["symbol"] else None,
         })
 
     overall = {}
