@@ -110,6 +110,12 @@ def _publish_files(names: tuple[str, ...]) -> None:
         print(f"publish {name}: {response.status_code}")
 
 
+def publish_files(names: tuple[str, ...] = ("latest", "history"),
+                  only: tuple[str, ...] | None = None) -> None:
+    """Public wrapper. ``only`` overrides ``names`` (kept for export_review)."""
+    _publish_files(only if only is not None else names)
+
+
 def run(do_publish: bool = False) -> dict[str, Any]:
     prices = data_fetcher.fetch_market()
     if len(prices) < int(os.environ.get("MIN_UNIVERSE", "800")):
