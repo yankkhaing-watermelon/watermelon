@@ -41,6 +41,11 @@ data), keep it. Do not create a new KV namespace.
 Create a new empty repository, upload all files from this package, and commit to
 the `main` branch.
 
+Do not upload `.pytest_cache` or `__pycache__`; they are temporary test folders.
+If `.github` is hidden during manual browser upload, follow
+`UPLOAD-TO-GITHUB.txt`. Visible copies of both workflows are provided as
+`APP-SCAN-WORKFLOW.yml` and `APP-REVIEW-WORKFLOW.yml`.
+
 ### 2. Reconnect the existing Worker to the new repository
 
 In Cloudflare Dashboard, open the existing `bursamusangking-app` Worker:

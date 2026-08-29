@@ -1,0 +1,28 @@
+GITHUB WEBSITE UPLOAD
+=====================
+
+1. Do not upload .pytest_cache or __pycache__. They are temporary test files.
+
+2. Upload all normal files and folders to the root of your new GitHub repository.
+
+3. If Windows or GitHub does not show the .github folder, create the workflows
+   directly on GitHub:
+
+   A. Click Add file > Create new file.
+   B. For the filename, enter:
+      .github/workflows/app-scan.yml
+   C. Open APP-SCAN-WORKFLOW.yml on your computer, copy all its contents, paste
+      them into GitHub, then click Commit changes.
+
+   D. Repeat Add file > Create new file.
+   E. Enter this filename:
+      .github/workflows/app-review.yml
+   F. Copy and paste APP-REVIEW-WORKFLOW.yml, then commit it.
+
+4. After both files are created, open the Actions tab. You should see:
+   - App Scan
+   - App Weekly Review
+
+The two visible APP-*-WORKFLOW.yml files are upload helpers. GitHub Actions only
+runs the copies placed under .github/workflows/.
+
