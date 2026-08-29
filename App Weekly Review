@@ -1,0 +1,29 @@
+name: App Weekly Review
+
+on:
+  schedule:
+    - cron: "30 10 * * 6"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Build and publish review
+        env:
+          MARKET: ${{ vars.MARKET || 'MYX' }}
+          WORKER_URL: ${{ secrets.WORKER_URL }}
+          PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+        run: python export_review.py --publish
+
