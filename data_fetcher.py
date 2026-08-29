@@ -1,23 +1,37 @@
-"""Batched Yahoo OHLCV downloader for the complete Bursa universe."""
+"""TradingView-first OHLCV downloader with a throttled Yahoo fallback.
+
+TradingView/tvDatafeed supplies daily history for the full Bursa universe.
+Yahoo is contacted only for symbols that remain unresolved after TradingView.
+"""
 from __future__ import annotations
 
 import os
+import random
+import threading
 import time
 from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any
 
 import pandas as pd
+import requests
 import yfinance as yf
 
 import config
 from universe import get_universe
 
-PERIOD = os.environ.get("PRICE_PERIOD", "2y")
+MIN_BARS = int(os.environ.get("MIN_PRICE_BARS", "275"))
+TV_BARS = int(os.environ.get("TV_BARS", "500"))
+YF_RETRY_WAIT = float(os.environ.get("YF_RETRY_WAIT", "20"))
+_thread_state = threading.local()
 
 
 def _normalise(raw: pd.DataFrame) -> pd.DataFrame:
     if not isinstance(raw, pd.DataFrame) or raw.empty:
         return pd.DataFrame()
     frame = raw.copy()
+    if isinstance(frame.columns, pd.MultiIndex):
+        frame.columns = [str(c[0]) for c in frame.columns]
     frame.columns = [str(c).strip().lower().replace(" ", "_") for c in frame.columns]
     if "adj_close" in frame and "close" not in frame:
         frame = frame.rename(columns={"adj_close": "close"})
@@ -29,12 +43,116 @@ def _normalise(raw: pd.DataFrame) -> pd.DataFrame:
     if getattr(index, "tz", None) is not None:
         index = index.tz_localize(None)
     frame.index = index
-    return frame.loc[~frame.index.isna()].sort_index().dropna(subset=["open", "high", "low", "close"])
+    return frame.loc[~frame.index.isna()].sort_index().dropna(
+        subset=["open", "high", "low", "close"]
+    )
 
 
-def _split_download(raw: pd.DataFrame, symbols: list[str]) -> dict[str, pd.DataFrame]:
+def _tv_client() -> tuple[Any, Any]:
+    cached = getattr(_thread_state, "tv", None)
+    if cached is not None:
+        return cached
+    try:
+        from tvDatafeed import Interval, TvDatafeed
+    except ImportError as exc:
+        raise RuntimeError(
+            "tvDatafeed is not installed; the workflow must install "
+            "git+https://github.com/rongardF/tvdatafeed.git"
+        ) from exc
+    client = TvDatafeed()
+    cached = (client, Interval)
+    _thread_state.tv = cached
+    return cached
+
+
+def _fetch_tradingview_symbol(row: dict[str, str]) -> pd.DataFrame:
+    client, interval = _tv_client()
+    last_error: Exception | None = None
+    for attempt in range(2):
+        try:
+            raw = client.get_hist(
+                symbol=row["tv_code"],
+                exchange=row.get("tv_exchange") or "MYX",
+                interval=interval.in_daily,
+                n_bars=TV_BARS,
+                extended_session=False,
+            )
+            clean = _normalise(raw)
+            if len(clean) >= MIN_BARS:
+                return clean
+            last_error = RuntimeError(f"only {len(clean)} usable TradingView bars")
+        except Exception as exc:
+            last_error = exc
+        if attempt == 0:
+            time.sleep(0.5 + random.random())
+    if last_error:
+        raise last_error
+    return pd.DataFrame()
+
+
+def _universe_rows(symbols: Iterable[str] | None = None) -> list[dict[str, str]]:
+    wanted = None
+    if symbols is not None:
+        wanted = {str(s).strip().upper() for s in symbols if str(s).strip()}
+    table = get_universe()
+    rows: list[dict[str, str]] = []
+    for item in table.to_dict("records"):
+        code = str(item.get("code") or item.get("symbol") or "").removesuffix(".KL").upper()
+        yahoo = str(item.get("yahoo_symbol") or item.get("symbol") or f"{code}.KL").upper()
+        if wanted is not None and yahoo not in wanted and code not in wanted:
+            continue
+        qualified = str(item.get("tv_symbol") or f"MYX:{code}").upper()
+        exchange, _, tv_code = qualified.partition(":")
+        rows.append({
+            "key": yahoo,
+            "code": code,
+            "name": str(item.get("description") or code),
+            "tv_symbol": qualified,
+            "tv_exchange": str(item.get("tv_exchange") or exchange or "MYX"),
+            "tv_code": str(item.get("tv_code") or tv_code or code),
+            "yahoo_symbol": yahoo,
+        })
+    if wanted is not None:
+        known = {row["key"] for row in rows}
+        for raw in sorted(wanted):
+            yahoo = raw if raw.endswith(".KL") else f"{raw}.KL"
+            if yahoo in known:
+                continue
+            code = yahoo.removesuffix(".KL")
+            rows.append({"key": yahoo, "code": code, "name": code,
+                         "tv_symbol": f"MYX:{code}", "tv_exchange": "MYX",
+                         "tv_code": code, "yahoo_symbol": yahoo})
+    return list({row["key"]: row for row in rows}.values())
+
+
+def _tradingview_primary(rows: list[dict[str, str]], max_workers: int) -> tuple[dict[str, pd.DataFrame], list[dict[str, str]]]:
+    result: dict[str, pd.DataFrame] = {}
+    unresolved: list[dict[str, str]] = []
+    completed = 0
+    with ThreadPoolExecutor(max_workers=max(1, min(max_workers, 10))) as pool:
+        futures = {pool.submit(_fetch_tradingview_symbol, row): row for row in rows}
+        for future in as_completed(futures):
+            row = futures[future]
+            completed += 1
+            try:
+                frame = future.result()
+                if len(frame) >= MIN_BARS:
+                    result[row["key"]] = frame
+                else:
+                    unresolved.append(row)
+            except Exception:
+                unresolved.append(row)
+            if completed % 50 == 0 or completed == len(rows):
+                print(
+                    f"TradingView primary {completed}/{len(rows)}; "
+                    f"usable={len(result)} unresolved={len(unresolved)}"
+                )
+    return result, unresolved
+
+
+def _split_yahoo(raw: pd.DataFrame, symbols: list[str]) -> dict[str, pd.DataFrame]:
     output: dict[str, pd.DataFrame] = {}
-    if raw.empty:
+    if not isinstance(raw, pd.DataFrame) or raw.empty:
         return output
     if isinstance(raw.columns, pd.MultiIndex):
         level0 = set(map(str, raw.columns.get_level_values(0)))
@@ -45,45 +163,107 @@ def _split_download(raw: pd.DataFrame, symbols: list[str]) -> dict[str, pd.DataF
             except (KeyError, ValueError):
                 continue
             clean = _normalise(part)
-            if len(clean) >= 275:
+            if len(clean) >= MIN_BARS:
                 output[symbol] = clean
     elif len(symbols) == 1:
         clean = _normalise(raw)
-        if len(clean) >= 275:
+        if len(clean) >= MIN_BARS:
             output[symbols[0]] = clean
     return output
 
 
-def fetch_many(symbols: Iterable[str], max_workers: int | None = None) -> dict[str, pd.DataFrame]:
-    del max_workers
-    ordered = list(dict.fromkeys(str(s).strip().upper() for s in symbols if str(s).strip()))
-    batch_size = max(20, int(config.UNIVERSE["batch_size"]))
+def _resolve_yahoo_symbol(row: dict[str, str], session: requests.Session) -> str:
+    direct = row["yahoo_symbol"]
+    try:
+        response = session.get(
+            "https://query2.finance.yahoo.com/v1/finance/search",
+            params={"q": row["code"], "quotesCount": 10, "newsCount": 0},
+            headers={"User-Agent": "Mozilla/5.0"}, timeout=15,
+        )
+        if response.ok:
+            quotes = response.json().get("quotes", [])
+            matches = [str(q.get("symbol") or "") for q in quotes]
+            kl = next((symbol for symbol in matches if symbol.upper().endswith(".KL")), None)
+            if kl:
+                return kl.upper()
+    except Exception:
+        pass
+    return direct
+
+
+def _yahoo_fallback(rows: list[dict[str, str]]) -> dict[str, pd.DataFrame]:
+    if not rows:
+        return {}
+    batch_size = max(1, min(int(config.UNIVERSE["batch_size"]), 20))
+    resolved: dict[str, str] = {}
+    session = requests.Session()
+    for row in rows:
+        resolved[row["key"]] = _resolve_yahoo_symbol(row, session)
+        time.sleep(0.12)
+
     result: dict[str, pd.DataFrame] = {}
-    for offset in range(0, len(ordered), batch_size):
-        batch = ordered[offset: offset + batch_size]
-        last_error: Exception | None = None
+    pairs = list(resolved.items())
+    for offset in range(0, len(pairs), batch_size):
+        batch_pairs = pairs[offset: offset + batch_size]
+        yahoo_symbols = list(dict.fromkeys(symbol for _, symbol in batch_pairs))
+        downloaded: dict[str, pd.DataFrame] = {}
         for attempt in range(3):
             try:
                 raw = yf.download(
-                    tickers=batch, period=PERIOD, interval="1d", auto_adjust=True,
-                    progress=False, group_by="ticker", threads=True, timeout=30,
+                    tickers=yahoo_symbols, period="2y", interval="1d",
+                    auto_adjust=True, progress=False, group_by="ticker",
+                    threads=False, timeout=30,
                 )
-                result.update(_split_download(raw, batch))
-                last_error = None
-                break
+                downloaded = _split_yahoo(raw, yahoo_symbols)
+                if downloaded or attempt == 2:
+                    break
             except Exception as exc:
-                last_error = exc
-                time.sleep(2 ** attempt)
-        if last_error:
-            print(f"batch {offset // batch_size + 1} failed: {last_error}")
-        print(f"market data {min(offset + len(batch), len(ordered))}/{len(ordered)}; usable={len(result)}")
+                print(f"Yahoo fallback batch retry {attempt + 1}: {exc}")
+            time.sleep(YF_RETRY_WAIT * (attempt + 1))
+        for key, yahoo_symbol in batch_pairs:
+            frame = downloaded.get(yahoo_symbol)
+            if frame is not None and len(frame) >= MIN_BARS:
+                result[key] = frame
+        done = min(offset + len(batch_pairs), len(pairs))
+        print(f"Yahoo fallback {done}/{len(pairs)}; recovered={len(result)}")
+        if done < len(pairs):
+            time.sleep(2.0 + random.random())
     return result
 
 
+def fetch_many(symbols: Iterable[str], max_workers: int | None = None) -> dict[str, pd.DataFrame]:
+    rows = _universe_rows(symbols)
+    workers = max_workers or int(config.UNIVERSE["max_workers"])
+    primary, unresolved = _tradingview_primary(rows, workers)
+    print(
+        f"TradingView primary complete: usable={len(primary)}/{len(rows)}; "
+        f"Yahoo fallback required={len(unresolved)}"
+    )
+    fallback = _yahoo_fallback(unresolved) if unresolved else {}
+    primary.update(fallback)
+    print(
+        f"Market data complete: usable={len(primary)}/{len(rows)} "
+        f"(TradingView={len(primary) - len(fallback)}, Yahoo={len(fallback)})"
+    )
+    return primary
+
+
 def fetch_market() -> dict[str, pd.DataFrame]:
-    return fetch_many(get_universe()["symbol"].dropna().tolist())
+    rows = _universe_rows()
+    workers = int(config.UNIVERSE["max_workers"])
+    primary, unresolved = _tradingview_primary(rows, workers)
+    print(
+        f"TradingView primary complete: usable={len(primary)}/{len(rows)}; "
+        f"Yahoo fallback required={len(unresolved)}"
+    )
+    fallback = _yahoo_fallback(unresolved) if unresolved else {}
+    primary.update(fallback)
+    print(
+        f"Market data complete: usable={len(primary)}/{len(rows)} "
+        f"(TradingView={len(primary) - len(fallback)}, Yahoo={len(fallback)})"
+    )
+    return primary
 
 
 def fetch_watchlist() -> dict[str, pd.DataFrame]:
     return fetch_many(config.WATCHLIST)
-

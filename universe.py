@@ -33,9 +33,15 @@ def _request() -> pd.DataFrame:
         code = str(values[0] or "").strip().upper()
         if not code:
             continue
+        qualified = str(item.get("s") or f"MYX:{code}").strip().upper()
+        tv_exchange, _, tv_code = qualified.partition(":")
         rows.append({
             "symbol": f"{code}.KL",
             "code": code,
+            "tv_symbol": qualified,
+            "tv_exchange": tv_exchange or "MYX",
+            "tv_code": tv_code or code,
+            "yahoo_symbol": f"{code}.KL",
             "description": str(values[1] or code),
             "sector": str(values[2] or "Unclassified"),
             "type": str(values[3] or "stock"),
@@ -59,4 +65,3 @@ def get_universe() -> pd.DataFrame:
             if len(cached) >= 800:
                 return cached
         raise
-
