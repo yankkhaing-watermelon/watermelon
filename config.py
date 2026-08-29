@@ -77,6 +77,7 @@ UNIVERSE = {
                                    #  True = quick indicator pre-filter first
                                    #  (~3-5 min/scan, may miss borderline setups)
     "max_workers": 8,              # parallel history downloads
+    "batch_size": 10,              # Yahoo fallback batch size (data_fetcher)
 }
 
 # Fallback watchlists — used when USE_FULL_MARKET = False or the scanner
