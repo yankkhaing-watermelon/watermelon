@@ -1,1 +1,16 @@
 date,symbol,strategy,close,score,first_seen,appearances,active,is_new
+2026-08-29,MNRB.KL,early_uptrend,3.03,84.9,2026-08-29,1,1,True
+2026-08-29,MNHLDG.KL,trending,3.47,89.2,2026-08-29,1,1,True
+2026-08-29,HEGROUP.KL,trending,0.85,89.1,2026-08-29,1,1,True
+2026-08-29,VITROX.KL,trending,9.23,88.9,2026-08-29,1,1,True
+2026-08-29,MIKROMB.KL,trending,0.59,88.9,2026-08-29,1,1,True
+2026-08-29,ECA.KL,trending,0.405,88.3,2026-08-29,1,1,True
+2026-08-29,CPETECH.KL,gaining_momentum,1.21,85.6,2026-08-29,1,1,True
+2026-08-29,TIMWELL.KL,trending,2.0,85.4,2026-08-29,1,1,True
+2026-08-29,WTK.KL,gaining_momentum,1.09,85.1,2026-08-29,1,1,True
+2026-08-29,GCB.KL,gaining_momentum,1.4,85.0,2026-08-29,1,1,True
+2026-08-29,CHB.KL,trending,2.05,87.2,2026-08-29,1,1,True
+2026-08-29,HKB.KL,early_uptrend,0.625,83.2,2026-08-29,1,1,True
+2026-08-29,MCLEAN.KL,early_uptrend,0.755,85.6,2026-08-29,1,1,True
+2026-08-29,YEWLEE.KL,early_uptrend,0.63,81.6,2026-08-29,1,1,True
+2026-08-29,HKB.KL,reversal,0.625,73.9,2026-08-29,1,1,True
