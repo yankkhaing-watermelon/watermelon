@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import os
 import random
+import logging
 import threading
 import time
 from collections.abc import Iterable
@@ -23,7 +24,9 @@ from universe import get_universe
 MIN_BARS = int(os.environ.get("MIN_PRICE_BARS", "275"))
 TV_BARS = int(os.environ.get("TV_BARS", "500"))
 YF_RETRY_WAIT = float(os.environ.get("YF_RETRY_WAIT", "20"))
-_thread_state = threading.local()
+TV_CONNECT_GAP = float(os.environ.get("TV_CONNECT_GAP", "0.45"))
+_tv_connect_lock = threading.Lock()
+_tv_next_connect = 0.0
 
 
 def _normalise(raw: pd.DataFrame) -> pd.DataFrame:
@@ -49,9 +52,6 @@ def _normalise(raw: pd.DataFrame) -> pd.DataFrame:
 
 
 def _tv_client() -> tuple[Any, Any]:
-    cached = getattr(_thread_state, "tv", None)
-    if cached is not None:
-        return cached
     try:
         from tvDatafeed import Interval, TvDatafeed
     except ImportError as exc:
@@ -59,17 +59,29 @@ def _tv_client() -> tuple[Any, Any]:
             "tvDatafeed is not installed; the workflow must install "
             "git+https://github.com/rongardF/tvdatafeed.git"
         ) from exc
-    client = TvDatafeed()
-    cached = (client, Interval)
-    _thread_state.tv = cached
-    return cached
+    logging.getLogger("tvDatafeed.main").setLevel(logging.CRITICAL)
+    return TvDatafeed(), Interval
+
+
+def _pace_tradingview_connection() -> None:
+    global _tv_next_connect
+    with _tv_connect_lock:
+        now = time.monotonic()
+        wait = _tv_next_connect - now
+        if wait > 0:
+            time.sleep(wait)
+        _tv_next_connect = time.monotonic() + TV_CONNECT_GAP
 
 
 def _fetch_tradingview_symbol(row: dict[str, str]) -> pd.DataFrame:
-    client, interval = _tv_client()
     last_error: Exception | None = None
-    for attempt in range(2):
+    empty_responses = 0
+    for attempt in range(4):
         try:
+            _pace_tradingview_connection()
+            # tvDatafeed creates a new WebSocket inside get_hist(). A fresh
+            # object gives every retry new chart and quote session IDs.
+            client, interval = _tv_client()
             raw = client.get_hist(
                 symbol=row["tv_code"],
                 exchange=row.get("tv_exchange") or "MYX",
@@ -80,11 +92,16 @@ def _fetch_tradingview_symbol(row: dict[str, str]) -> pd.DataFrame:
             clean = _normalise(raw)
             if len(clean) >= MIN_BARS:
                 return clean
+            empty_responses += 1
             last_error = RuntimeError(f"only {len(clean)} usable TradingView bars")
         except Exception as exc:
             last_error = exc
-        if attempt == 0:
-            time.sleep(0.5 + random.random())
+        # Two clean no-data responses usually mean a genuine unsupported or
+        # newly-listed symbol. Move it to Yahoo without wasting four sockets.
+        if empty_responses >= 2:
+            break
+        if attempt < 3:
+            time.sleep(min(12.0, 1.5 * (2 ** attempt)) + random.random())
     if last_error:
         raise last_error
     return pd.DataFrame()
@@ -129,7 +146,11 @@ def _tradingview_primary(rows: list[dict[str, str]], max_workers: int) -> tuple[
     result: dict[str, pd.DataFrame] = {}
     unresolved: list[dict[str, str]] = []
     completed = 0
-    with ThreadPoolExecutor(max_workers=max(1, min(max_workers, 10))) as pool:
+    print(
+        f"TradingView primary starting: {len(rows)} symbols, "
+        f"workers={max(1, min(max_workers, 6))}, bars={TV_BARS}"
+    )
+    with ThreadPoolExecutor(max_workers=max(1, min(max_workers, 6))) as pool:
         futures = {pool.submit(_fetch_tradingview_symbol, row): row for row in rows}
         for future in as_completed(futures):
             row = futures[future]

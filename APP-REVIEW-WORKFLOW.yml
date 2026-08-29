@@ -19,11 +19,14 @@ jobs:
           python-version: "3.11"
           cache: pip
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          pip install --upgrade git+https://github.com/rongardF/tvdatafeed.git
       - name: Build and publish review
         env:
           MARKET: ${{ vars.MARKET || 'MYX' }}
           WORKER_URL: ${{ secrets.WORKER_URL }}
           PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+          TV_MAX_WORKERS: ${{ vars.TV_MAX_WORKERS || '3' }}
+          TV_BARS: ${{ vars.TV_BARS || '500' }}
         run: python export_review.py --publish
-

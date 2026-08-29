@@ -18,11 +18,13 @@ depend on the suspended GitHub account.
 
 ## Architecture
 
-1. GitHub Actions downloads the Bursa universe and daily price history.
-2. The embedded `bmk_screener_v3.py` screens with V5.1 Balanced rules.
-3. `export_scan.py` publishes `latest.json` and `history.json` to your Worker.
-4. The Worker stores the four JSON payloads in your existing `SCANS` KV.
-5. The static PWA reads the Worker API.
+1. GitHub Actions discovers the full Bursa universe from TradingView.
+2. TradingView/tvDatafeed downloads daily history as the primary source.
+3. Only symbols unresolved by TradingView are sent to a throttled Yahoo fallback.
+4. The embedded `bmk_screener_v3.py` screens with V5.1 Balanced rules.
+5. `export_scan.py` publishes `latest.json` and `history.json` to your Worker.
+6. The Worker stores the four JSON payloads in your existing `SCANS` KV.
+7. The static PWA reads the Worker API.
 
 The scanner fails closed if fewer than 800 Bursa symbols have usable history;
 it will not publish a misleading partial-market result.
@@ -77,6 +79,8 @@ Optional repository variable:
 | Variable | Default | Purpose |
 | --- | ---: | --- |
 | `MIN_UNIVERSE` | `800` | Stops partial scans from replacing valid data |
+| `TV_MAX_WORKERS` | `3` | Concurrent TradingView history requests; deliberately conservative to reduce WebSocket drops |
+| `TV_BARS` | `500` | Daily TradingView bars requested per counter |
 
 ### 4. Deploy the PWA with Cloudflare Pages
 
@@ -127,6 +131,7 @@ Then open the PWA and verify:
 ```bash
 pip install -r requirements.txt
 pytest -q tests_screener_v51.py
+pytest -q test_data_fetcher.py
 python -m py_compile export_scan.py data_fetcher.py universe.py signal_log.py
 ```
 

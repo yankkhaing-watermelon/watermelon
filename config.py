@@ -10,6 +10,6 @@ UNIVERSE_MODE = "TradingView Bursa equities"
 USE_FULL_MARKET = True
 WATCHLIST: list[str] = []
 UNIVERSE = {
-    "max_workers": int(os.environ.get("TV_MAX_WORKERS", "6")),
+    "max_workers": int(os.environ.get("TV_MAX_WORKERS", "3")),
     "batch_size": int(os.environ.get("YF_BATCH_SIZE", "10")),
 }
