@@ -1,0 +1,1238 @@
+"""Bursa MusangKing Screener V3.1 Balanced.
+
+A deterministic, point-in-time technical screener for Bursa Malaysia.
+
+Design goals
+------------
+* Rank stocks on benchmark-relative, beta-adjusted momentum rather than raw
+  price change alone.
+* Apply market-regime, liquidity, volatility and extension controls before a
+  stock can qualify.
+* Keep the six screeners economically distinct.
+* Use only OHLCV, a broad Malaysian benchmark and optional sector metadata.
+* Never fabricate fundamentals, prices, scores or backtest results.
+
+The module does not guarantee outperformance. It produces candidates that must
+be validated with point-in-time, survivorship-aware, next-session backtests.
+"""
+from __future__ import annotations
+
+from dataclasses import asdict, dataclass, field
+from typing import Any, Iterable, Mapping, Sequence
+import math
+
+import numpy as np
+import pandas as pd
+
+
+STRATEGIES: tuple[str, ...] = (
+    "trending",
+    "early_uptrend",
+    "reversal",
+    "gaining_momentum",
+    "base_breakout",
+    "meta_leader",  # Technical: Market, Expansion, Trend, Accumulation.
+)
+
+STRATEGY_LABELS: dict[str, str] = {
+    "trending": "Trending",
+    "early_uptrend": "Early Uptrend",
+    "reversal": "Confirmed Reversal",
+    "gaining_momentum": "Gaining Momentum",
+    "base_breakout": "Base Breakout",
+    "meta_leader": "M.E.T.A. Technical Leader",
+}
+
+
+@dataclass(frozen=True)
+class ScreenerConfig:
+    # Point-in-time data and tradability gates.
+    # V3.1 keeps hard safety gates but uses Bursa-appropriate liquidity floors.
+    min_history_bars: int = 300
+    min_price: float = 0.30
+    hard_min_median_turnover_20: float = 300_000.0
+    preferred_median_turnover_20: float = 1_000_000.0
+    min_median_volume_20: float = 50_000.0
+    max_zero_volume_ratio_60: float = 0.05
+    min_natr14: float = 0.010
+    max_natr14: float = 0.085
+    max_abs_gap_pct: float = 10.0
+    max_abs_day_move_pct: float = 18.0
+
+    # Ranking and output discipline.
+    min_score: float = 66.0
+    min_meta_score: float = 72.0
+    min_universe_for_percentile_filter: int = 40
+    keep_top_fraction_per_strategy: float = 0.20
+    max_results_per_strategy: int = 30
+
+    # Relative-strength gates.
+    continuation_rs126_percentile: float = 65.0
+    momentum_rs20_percentile: float = 70.0
+    leader_rs126_percentile: float = 80.0
+    min_sector_percentile: float = 50.0
+
+    # Extension / risk controls.
+    max_distance_ema20_atr: float = 2.60
+    max_trending_drawdown_60: float = 0.22
+    max_early_drawdown_60: float = 0.28
+    max_momentum_return_20: float = 0.30
+    max_momentum_return_5: float = 0.15
+
+    # Breakout structure.
+    base_min_days: int = 15
+    base_max_days: int = 70
+    base_min_depth: float = 0.04
+    base_max_depth: float = 0.28
+    base_min_prior_advance: float = 0.05
+    breakout_min_volume_ratio: float = 1.30
+    breakout_max_above_pivot: float = 0.045
+    breakout_max_gap_pct: float = 8.0
+    base_max_atr_contraction: float = 1.00
+    base_max_volume_dryup: float = 1.00
+
+    # Market regime / momentum crash protection.
+    bull_breadth50: float = 0.55
+    neutral_breadth50: float = 0.45
+    risk_off_breadth50: float = 0.38
+    panic_prior_drawdown: float = -0.10
+    panic_rebound_5d: float = 0.05
+
+
+@dataclass(frozen=True)
+class MarketRegime:
+    state: str
+    score: float
+    benchmark_close: float
+    benchmark_sma50: float
+    benchmark_sma200: float
+    breadth_above_50: float
+    breadth_above_200: float
+    breadth_positive_20: float
+    new_high_low_balance: float
+    panic_rebound: bool
+    continuation_allowed: bool
+    reasons: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class BasePattern:
+    valid: bool
+    days: int = 0
+    pivot: float | None = None
+    depth: float | None = None
+    prior_advance: float | None = None
+    atr_contraction: float | None = None
+    volume_dryup: float | None = None
+    tightness: float | None = None
+    quality: float = 0.0
+    reason: str = ""
+
+
+@dataclass
+class Candidate:
+    symbol: str
+    name: str
+    sector: str
+    strategy: str
+    strategy_label: str
+    score: float
+    priority_score: float
+    rank: int
+    strategy_percentile: float
+    confluence_count: int
+    confluence: list[str]
+    status: str
+    price: float
+    entry_low: float
+    entry_high: float
+    pivot: float | None
+    suggested_stop: float
+    risk_pct: float
+    max_order_value_5pct_adv: float
+    market_regime: str
+    reasons: list[str]
+    warnings: list[str]
+    metrics: dict[str, Any]
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class _Evaluation:
+    strategy: str
+    passed: bool
+    score: float = 0.0
+    status: str = "ACTIVE"
+    reasons: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    pivot: float | None = None
+    stop: float | None = None
+    entry_low: float | None = None
+    entry_high: float | None = None
+    components: dict[str, float] = field(default_factory=dict)
+    failed_conditions: list[str] = field(default_factory=list)
+
+
+def _safe_div(a: float, b: float, default: float = np.nan) -> float:
+    if not np.isfinite(a) or not np.isfinite(b) or b == 0:
+        return default
+    return float(a / b)
+
+
+def _clip100(value: float) -> float:
+    if not np.isfinite(value):
+        return 0.0
+    return float(np.clip(value, 0.0, 100.0))
+
+
+def _weighted(parts: Mapping[str, float], weights: Mapping[str, float]) -> float:
+    total = sum(float(weights[k]) for k in weights)
+    if total <= 0:
+        return 0.0
+    return float(sum(_clip100(parts.get(k, 0.0)) * float(w) for k, w in weights.items()) / total)
+
+
+def _pct_rank(series: pd.Series, neutral: float = 50.0) -> pd.Series:
+    numeric = pd.to_numeric(series, errors="coerce")
+    if numeric.notna().sum() <= 1:
+        return pd.Series(neutral, index=series.index, dtype=float)
+    return numeric.rank(pct=True, method="average") * 100.0
+
+
+def _clean_frame(df: pd.DataFrame, as_of: Any | None = None) -> pd.DataFrame:
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("OHLCV input must be a pandas DataFrame")
+    out = df.copy()
+    out.columns = [str(c).strip().lower() for c in out.columns]
+    required = {"open", "high", "low", "close", "volume"}
+    missing = required - set(out.columns)
+    if missing:
+        raise ValueError(f"Missing OHLCV columns: {sorted(missing)}")
+    out = out[["open", "high", "low", "close", "volume"]]
+    out = out.apply(pd.to_numeric, errors="coerce")
+    out.index = pd.to_datetime(out.index, errors="coerce")
+    out = out[~out.index.isna()].sort_index()
+    out = out[~out.index.duplicated(keep="last")]
+    if as_of is not None:
+        out = out.loc[out.index <= pd.Timestamp(as_of)]
+    out = out.dropna(subset=["open", "high", "low", "close"])
+    out["volume"] = out["volume"].fillna(0.0).clip(lower=0.0)
+    valid = (
+        (out["open"] > 0)
+        & (out["close"] > 0)
+        & (out["high"] >= out[["open", "close", "low"]].max(axis=1))
+        & (out["low"] <= out[["open", "close", "high"]].min(axis=1))
+    )
+    return out.loc[valid]
+
+
+def _atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
+    previous = df["close"].shift(1)
+    tr = pd.concat(
+        [
+            df["high"] - df["low"],
+            (df["high"] - previous).abs(),
+            (df["low"] - previous).abs(),
+        ],
+        axis=1,
+    ).max(axis=1)
+    return tr.ewm(alpha=1 / period, adjust=False, min_periods=period).mean()
+
+
+def _rsi(close: pd.Series, period: int = 14) -> pd.Series:
+    delta = close.diff()
+    gain = delta.clip(lower=0).ewm(alpha=1 / period, adjust=False, min_periods=period).mean()
+    loss = (-delta.clip(upper=0)).ewm(alpha=1 / period, adjust=False, min_periods=period).mean()
+    rs = gain / loss.replace(0, np.nan)
+    return 100 - 100 / (1 + rs)
+
+
+def _adx(df: pd.DataFrame, period: int = 14) -> pd.Series:
+    up = df["high"].diff()
+    down = -df["low"].diff()
+    plus_dm = up.where((up > down) & (up > 0), 0.0)
+    minus_dm = down.where((down > up) & (down > 0), 0.0)
+    atr = _atr(df, period)
+    plus_di = 100 * plus_dm.ewm(alpha=1 / period, adjust=False, min_periods=period).mean() / atr.replace(0, np.nan)
+    minus_di = 100 * minus_dm.ewm(alpha=1 / period, adjust=False, min_periods=period).mean() / atr.replace(0, np.nan)
+    dx = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di).replace(0, np.nan)
+    return dx.ewm(alpha=1 / period, adjust=False, min_periods=period).mean()
+
+
+def _slope_log(series: pd.Series, window: int) -> float:
+    s = pd.to_numeric(series, errors="coerce").dropna().tail(window)
+    if len(s) < max(8, window // 2) or (s <= 0).any():
+        return np.nan
+    x = np.arange(len(s), dtype=float)
+    slope = np.polyfit(x, np.log(s.to_numpy(dtype=float)), 1)[0]
+    return float(np.expm1(slope))
+
+
+def _efficiency_ratio(close: pd.Series, window: int) -> float:
+    s = close.dropna().tail(window + 1)
+    if len(s) < window + 1:
+        return np.nan
+    net = abs(float(s.iloc[-1] - s.iloc[0]))
+    path = float(s.diff().abs().sum())
+    return _safe_div(net, path, 0.0)
+
+
+def _max_drawdown(close: pd.Series, window: int) -> float:
+    s = close.dropna().tail(window)
+    if len(s) < 2:
+        return np.nan
+    peak = s.cummax()
+    return float((s / peak - 1.0).min())
+
+
+def _obv(close: pd.Series, volume: pd.Series) -> pd.Series:
+    direction = np.sign(close.diff()).fillna(0.0)
+    return (direction * volume.fillna(0.0)).cumsum()
+
+
+def enrich(df: pd.DataFrame, as_of: Any | None = None) -> pd.DataFrame:
+    """Return deterministic point-in-time indicators calculated from OHLCV."""
+    x = _clean_frame(df, as_of=as_of)
+    close = x["close"]
+    volume = x["volume"]
+    x["ema10"] = close.ewm(span=10, adjust=False, min_periods=10).mean()
+    x["ema20"] = close.ewm(span=20, adjust=False, min_periods=20).mean()
+    x["sma50"] = close.rolling(50).mean()
+    x["sma200"] = close.rolling(200).mean()
+    x["atr10"] = _atr(x, 10)
+    x["atr14"] = _atr(x, 14)
+    x["atr50"] = _atr(x, 50)
+    x["natr14"] = x["atr14"] / close
+    x["rsi14"] = _rsi(close, 14)
+    x["adx14"] = _adx(x, 14)
+    x["turnover"] = close * volume
+    x["median_turnover20"] = x["turnover"].rolling(20).median()
+    x["median_volume20"] = volume.rolling(20).median()
+    x["volume_mean5"] = volume.rolling(5).mean()
+    x["volume_mean10"] = volume.rolling(10).mean()
+    x["volume_mean20"] = volume.rolling(20).mean()
+    x["volume_mean50"] = volume.rolling(50).mean()
+    x["volume_ratio20"] = volume / x["volume_mean20"].replace(0, np.nan)
+    x["volume_ratio5_20"] = x["volume_mean5"] / x["volume_mean20"].replace(0, np.nan)
+    x["volume_dryup10_50"] = x["volume_mean10"] / x["volume_mean50"].replace(0, np.nan)
+    x["atr_contraction10_50"] = x["atr10"] / x["atr50"].replace(0, np.nan)
+    x["ret1"] = close.pct_change()
+    x["ret5"] = close.pct_change(5)
+    x["ret20"] = close.pct_change(20)
+    x["ret63"] = close.pct_change(63)
+    x["ret126_ex5"] = close.shift(5) / close.shift(131) - 1.0
+    x["ret252_ex21"] = close.shift(21) / close.shift(273) - 1.0
+    x["gap_pct"] = (x["open"] / close.shift(1) - 1.0) * 100.0
+    x["day_move_pct"] = x["ret1"] * 100.0
+    x["high10_prev"] = x["high"].shift(1).rolling(10).max()
+    x["high20_prev"] = x["high"].shift(1).rolling(20).max()
+    x["high55_prev"] = x["high"].shift(1).rolling(55).max()
+    x["high252"] = x["high"].rolling(252).max()
+    x["low10"] = x["low"].rolling(10).min()
+    x["low30_prev"] = x["low"].shift(10).rolling(30).min()
+    x["high120"] = x["high"].rolling(120).max()
+    x["dist_ema20_atr"] = (close - x["ema20"]) / x["atr14"].replace(0, np.nan)
+    x["clv"] = ((close - x["low"]) / (x["high"] - x["low"]).replace(0, np.nan)).clip(0, 1)
+    x["obv"] = _obv(close, volume)
+    up_volume = volume.where(close.diff() > 0, 0.0).rolling(20).sum()
+    down_volume = volume.where(close.diff() < 0, 0.0).rolling(20).sum()
+    x["up_down_volume20"] = up_volume / down_volume.replace(0, np.nan)
+    x["accumulation_day"] = ((x["ret1"] > 0.002) & (volume > volume.shift(1))).astype(int)
+    x["distribution_day"] = ((x["ret1"] < -0.002) & (volume > volume.shift(1))).astype(int)
+    return x
+
+
+def _aligned_returns(stock: pd.DataFrame, benchmark: pd.DataFrame) -> pd.DataFrame:
+    joined = pd.concat(
+        [stock["close"].pct_change().rename("stock"), benchmark["close"].pct_change().rename("market")],
+        axis=1,
+        join="inner",
+    ).dropna()
+    return joined
+
+
+def _residual_momentum(stock: pd.DataFrame, benchmark: pd.DataFrame) -> dict[str, float]:
+    """Beta-adjusted residual momentum using only historical daily returns.
+
+    Beta is estimated from the latest 126 sessions available at the evaluation
+    date. Momentum windows are additive log residual returns, with the latest
+    five sessions skipped for structural measures to reduce short-term reversal
+    and event-chasing contamination.
+    """
+    r = _aligned_returns(stock, benchmark).tail(180)
+    if len(r) < 132 or float(r["market"].var()) <= 1e-12:
+        return {k: np.nan for k in ("beta", "resid5", "resid20", "resid63_ex5", "resid126_ex5", "resid_sharpe126")}
+    beta_window = r.tail(126)
+    beta = float(beta_window["stock"].cov(beta_window["market"]) / beta_window["market"].var())
+    beta = float(np.clip(beta, -1.0, 3.0))
+    residual = r["stock"] - beta * r["market"]
+
+    def sum_log(window: int, skip: int = 0) -> float:
+        s = residual.iloc[: len(residual) - skip if skip else None].tail(window)
+        if len(s) < window:
+            return np.nan
+        clipped = s.clip(lower=-0.95)
+        return float(np.log1p(clipped).sum())
+
+    hist = residual.iloc[:-5].tail(126)
+    vol = float(hist.std(ddof=1)) if len(hist) >= 60 else np.nan
+    sharpe = _safe_div(float(hist.mean()), vol, np.nan) * math.sqrt(252) if np.isfinite(vol) and vol > 0 else np.nan
+    return {
+        "beta": beta,
+        "resid5": sum_log(5, 0),
+        "resid20": sum_log(20, 0),
+        "resid63_ex5": sum_log(63, 5),
+        "resid126_ex5": sum_log(126, 5),
+        "resid_sharpe126": sharpe,
+    }
+
+
+def _breadth(prices: Mapping[str, pd.DataFrame], as_of: Any | None = None) -> dict[str, float]:
+    above50: list[bool] = []
+    above200: list[bool] = []
+    positive20: list[bool] = []
+    new_high: list[bool] = []
+    new_low: list[bool] = []
+    for raw in prices.values():
+        try:
+            e = enrich(raw, as_of=as_of)
+            if len(e) < 210:
+                continue
+            z = e.iloc[-1]
+            above50.append(bool(z.close > z.sma50))
+            above200.append(bool(z.close > z.sma200))
+            positive20.append(bool(z.ret20 > 0))
+            new_high.append(bool(z.close >= e["high"].tail(252).max() * 0.98))
+            new_low.append(bool(z.close <= e["low"].tail(252).min() * 1.02))
+        except (ValueError, TypeError, KeyError, IndexError):
+            continue
+    def mean(values: Sequence[bool]) -> float:
+        return float(np.mean(values)) if values else np.nan
+    nh = mean(new_high)
+    nl = mean(new_low)
+    return {
+        "above50": mean(above50),
+        "above200": mean(above200),
+        "positive20": mean(positive20),
+        "nhnl": (nh - nl) if np.isfinite(nh) and np.isfinite(nl) else np.nan,
+    }
+
+
+def market_regime(
+    benchmark: pd.DataFrame,
+    universe_prices: Mapping[str, pd.DataFrame] | None = None,
+    config: ScreenerConfig | None = None,
+    as_of: Any | None = None,
+) -> MarketRegime:
+    cfg = config or ScreenerConfig()
+    b = enrich(benchmark, as_of=as_of)
+    if len(b) < 273:
+        return MarketRegime("unknown", 35.0, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, False, False, ("insufficient benchmark history",))
+    z = b.iloc[-1]
+    breadth = _breadth(universe_prices or {}, as_of=as_of)
+    b50 = breadth["above50"] if np.isfinite(breadth["above50"]) else float((b["close"].tail(20) > b["ema20"].tail(20)).mean())
+    b200 = breadth["above200"] if np.isfinite(breadth["above200"]) else 0.50
+    p20 = breadth["positive20"] if np.isfinite(breadth["positive20"]) else 0.50
+    nhnl = breadth["nhnl"] if np.isfinite(breadth["nhnl"]) else 0.0
+    close, sma50, sma200 = float(z.close), float(z.sma50), float(z.sma200)
+    slope50 = _slope_log(b["sma50"], 20)
+    slope200 = _slope_log(b["sma200"], 40)
+    rolling_peak = b["close"].tail(60).cummax()
+    prior_drawdown = float((b["close"].tail(60) / rolling_peak - 1).min())
+    rebound5 = float(z.ret5) if np.isfinite(z.ret5) else 0.0
+    panic = prior_drawdown <= cfg.panic_prior_drawdown and rebound5 >= cfg.panic_rebound_5d
+    reasons: list[str] = []
+
+    if close > sma50 > sma200 and slope50 > 0 and b50 >= cfg.bull_breadth50 and b200 >= 0.50:
+        state, score = "bull", 100.0
+        reasons.append("benchmark and breadth confirm a broad uptrend")
+    elif close > sma200 and b50 >= cfg.neutral_breadth50:
+        state, score = "neutral", 75.0
+        reasons.append("benchmark is above its long-term trend with mixed breadth")
+    elif close > sma50 and slope50 > 0 and b50 >= cfg.neutral_breadth50:
+        state, score = "recovery", 60.0
+        reasons.append("benchmark and breadth are recovering but long-term confirmation is incomplete")
+    else:
+        state, score = "risk_off", 25.0
+        reasons.append("benchmark or breadth is below the continuation threshold")
+
+    if panic:
+        score = min(score, 35.0)
+        reasons.append("sharp rebound after a material drawdown creates momentum-crash risk")
+    continuation_allowed = state in {"bull", "neutral", "recovery"} and not panic and b50 >= cfg.neutral_breadth50
+    return MarketRegime(
+        state=state,
+        score=score,
+        benchmark_close=close,
+        benchmark_sma50=sma50,
+        benchmark_sma200=sma200,
+        breadth_above_50=b50,
+        breadth_above_200=b200,
+        breadth_positive_20=p20,
+        new_high_low_balance=nhnl,
+        panic_rebound=panic,
+        continuation_allowed=continuation_allowed,
+        reasons=tuple(reasons),
+    )
+
+
+def _crossed_above(a: pd.Series, b: pd.Series, lookback: int) -> bool:
+    cross = (a > b) & (a.shift(1) <= b.shift(1))
+    return bool(cross.tail(lookback).fillna(False).any())
+
+
+def _turned_positive_slope(series: pd.Series, lookback: int = 15, slope_window: int = 10) -> bool:
+    values: list[float] = []
+    for offset in range(lookback, -1, -1):
+        end = len(series) - offset
+        if end <= 0:
+            continue
+        values.append(_slope_log(series.iloc[:end], slope_window))
+    clean = [v for v in values if np.isfinite(v)]
+    return bool(clean and clean[-1] > 0 and any(v <= 0 for v in clean[:-1]))
+
+
+def _detect_base(e: pd.DataFrame, cfg: ScreenerConfig) -> BasePattern:
+    best: BasePattern | None = None
+    for days in range(cfg.base_min_days, cfg.base_max_days + 1):
+        if len(e) < days + 61:
+            continue
+        base = e.iloc[-(days + 1):-1]  # Completed sessions before today's breakout bar.
+        if len(base) != days:
+            continue
+        pivot = float(base["high"].max())
+        low = float(base["low"].min())
+        depth = _safe_div(pivot - low, pivot, np.nan)
+        if not np.isfinite(depth) or not cfg.base_min_depth <= depth <= cfg.base_max_depth:
+            continue
+        pre_start = float(e["close"].iloc[-(days + 61)])
+        base_start = float(base["close"].iloc[0])
+        prior_advance = _safe_div(base_start, pre_start, np.nan) - 1.0
+        if not np.isfinite(prior_advance) or prior_advance < cfg.base_min_prior_advance:
+            continue
+        atr_contraction = _safe_div(float(base["atr10"].tail(10).mean()), float(base["atr50"].tail(20).mean()), np.nan)
+        volume_dryup = _safe_div(float(base["volume"].tail(10).mean()), float(base["volume"].tail(50).mean()), np.nan)
+        tight_high = float(base["high"].tail(10).max())
+        tight_low = float(base["low"].tail(10).min())
+        tightness = _safe_div(tight_high - tight_low, pivot, np.nan)
+        if not np.isfinite(atr_contraction) or atr_contraction > cfg.base_max_atr_contraction:
+            continue
+        if not np.isfinite(volume_dryup) or volume_dryup > cfg.base_max_volume_dryup:
+            continue
+        if not np.isfinite(tightness) or tightness > min(0.12, depth * 0.80):
+            continue
+        # Favor moderate depth, contraction, tightness and adequate duration.
+        quality = _clip100(
+            100
+            - abs(depth - 0.12) * 220
+            - max(0, atr_contraction - 0.65) * 80
+            - max(0, volume_dryup - 0.65) * 55
+            - tightness * 260
+            + min(days, 45) * 0.25
+        )
+        pattern = BasePattern(True, days, pivot, depth, prior_advance, atr_contraction, volume_dryup, tightness, quality, "valid contracted base")
+        if best is None or pattern.quality > best.quality:
+            best = pattern
+    return best or BasePattern(False, reason="no valid contracted base")
+
+
+def _feature_row(
+    symbol: str,
+    raw: pd.DataFrame,
+    benchmark: pd.DataFrame,
+    metadata: Mapping[str, Any],
+    cfg: ScreenerConfig,
+    as_of: Any | None,
+) -> dict[str, Any] | None:
+    e = enrich(raw, as_of=as_of)
+    if len(e) < cfg.min_history_bars:
+        return None
+    b = enrich(benchmark, as_of=as_of).reindex(e.index).ffill().dropna(subset=["close"])
+    if len(b) < 273:
+        return None
+    z = e.iloc[-1]
+    residual = _residual_momentum(e, b)
+    close = float(z.close)
+    recent_high120 = float(e["high"].tail(120).max())
+    higher_low = bool(float(e["low"].tail(10).min()) > float(e["low"].iloc[-40:-10].min()))
+    obv60_high = bool(float(z.obv) >= float(e["obv"].tail(60).max()) * 0.98) if float(e["obv"].tail(60).max()) > 0 else bool(float(z.obv) >= float(e["obv"].tail(60).max()))
+    row = {
+        "symbol": str(symbol).upper(),
+        "name": str(metadata.get("name") or metadata.get("company") or str(symbol).replace(".KL", "")),
+        "sector": str(metadata.get("sector") or "Unclassified"),
+        "df": e,
+        "close": close,
+        "ema20": float(z.ema20),
+        "sma50": float(z.sma50),
+        "sma200": float(z.sma200),
+        "atr14": float(z.atr14),
+        "natr14": float(z.natr14),
+        "rsi14": float(z.rsi14),
+        "adx14": float(z.adx14),
+        "median_turnover20": float(z.median_turnover20),
+        "median_volume20": float(z.median_volume20),
+        "zero_volume_ratio60": float((e["volume"].tail(60) <= 0).mean()),
+        "volume_ratio20": float(z.volume_ratio20),
+        "volume_ratio5_20": float(z.volume_ratio5_20),
+        "volume_dryup10_50": float(z.volume_dryup10_50),
+        "atr_contraction10_50": float(z.atr_contraction10_50),
+        "up_down_volume20": float(z.up_down_volume20) if np.isfinite(z.up_down_volume20) else 0.0,
+        "accumulation_days20": int(e["accumulation_day"].tail(20).sum()),
+        "distribution_days20": int(e["distribution_day"].tail(20).sum()),
+        "clv": float(z.clv) if np.isfinite(z.clv) else 0.5,
+        "gap_pct": float(z.gap_pct) if np.isfinite(z.gap_pct) else 0.0,
+        "day_move_pct": float(z.day_move_pct) if np.isfinite(z.day_move_pct) else 0.0,
+        "ret5": float(z.ret5),
+        "ret20": float(z.ret20),
+        "ret63": float(z.ret63),
+        "near_52_high": _safe_div(close, float(z.high252), np.nan),
+        "distance_ema20_atr": float(z.dist_ema20_atr),
+        "ema20_slope20": _slope_log(e["ema20"], 20),
+        "sma50_slope20": _slope_log(e["sma50"], 20),
+        "sma200_slope40": _slope_log(e["sma200"], 40),
+        "trend_efficiency50": _efficiency_ratio(e["close"], 50),
+        "max_drawdown60": _max_drawdown(e["close"], 60),
+        "obv_slope20": _slope_log(e["obv"].abs() + 1.0, 20),
+        "obv_near_60_high": obv60_high,
+        "higher_low": higher_low,
+        "prior_drawdown120": _safe_div(recent_high120 - close, recent_high120, np.nan),
+        "pivot10": float(z.high10_prev),
+        "pivot20": float(z.high20_prev),
+        "pivot55": float(z.high55_prev),
+        **residual,
+    }
+    return row
+
+
+def _tradable(r: pd.Series, cfg: ScreenerConfig) -> tuple[bool, list[str]]:
+    failures: list[str] = []
+    if r.close < cfg.min_price:
+        failures.append("price below minimum")
+    if r.median_turnover20 < cfg.hard_min_median_turnover_20:
+        failures.append("median traded value below hard liquidity floor")
+    if r.median_volume20 < cfg.min_median_volume_20:
+        failures.append("median share volume below minimum")
+    if r.zero_volume_ratio60 > cfg.max_zero_volume_ratio_60:
+        failures.append("too many zero-volume sessions")
+    if not cfg.min_natr14 <= r.natr14 <= cfg.max_natr14:
+        failures.append("ATR percentage outside tradable range")
+    if abs(r.gap_pct) > cfg.max_abs_gap_pct:
+        failures.append("opening gap requires event verification")
+    if abs(r.day_move_pct) > cfg.max_abs_day_move_pct:
+        failures.append("daily move requires corporate-action verification")
+    return (len(failures) == 0, failures)
+
+
+def _accumulation_score(r: pd.Series) -> float:
+    return _weighted(
+        {
+            "up_down": _clip100(35 + r.up_down_volume20 * 35),
+            "obv": _clip100(55 + r.obv_slope20 * 6500),
+            "days": _clip100(50 + (r.accumulation_days20 - r.distribution_days20) * 8),
+            "close": _clip100(r.clv * 100),
+        },
+        {"up_down": 0.35, "obv": 0.25, "days": 0.25, "close": 0.15},
+    )
+
+
+def _risk_score(r: pd.Series, cfg: ScreenerConfig) -> float:
+    return _weighted(
+        {
+            "extension": _clip100(100 - max(0.0, r.distance_ema20_atr) / cfg.max_distance_ema20_atr * 70),
+            "volatility": _clip100(100 - max(0.0, r.natr14 - 0.02) * 1100),
+            "drawdown": _clip100(100 + r.max_drawdown60 * 400),
+            "liquidity": _clip100(30 + math.log10(max(r.median_turnover20, 1.0) / cfg.hard_min_median_turnover_20 + 1.0) * 55),
+        },
+        {"extension": 0.30, "volatility": 0.25, "drawdown": 0.25, "liquidity": 0.20},
+    )
+
+
+def _trend_structure_score(r: pd.Series) -> float:
+    return _weighted(
+        {
+            "alignment": np.mean([
+                100.0 if r.close > r.ema20 else 0.0,
+                100.0 if r.ema20 > r.sma50 else 0.0,
+                100.0 if r.sma50 > r.sma200 else 0.0,
+            ]),
+            "slope50": _clip100(50 + r.sma50_slope20 * 9000),
+            "slope200": _clip100(50 + r.sma200_slope40 * 13000),
+            "efficiency": _clip100(r.trend_efficiency50 * 180),
+            "high": _clip100((r.near_52_high - 0.55) / 0.45 * 100),
+        },
+        {"alignment": 0.30, "slope50": 0.20, "slope200": 0.15, "efficiency": 0.20, "high": 0.15},
+    )
+
+
+def _stop_for(r: pd.Series, strategy: str, pivot: float | None = None) -> float:
+    e: pd.DataFrame = r.df
+    price = float(r.close)
+    atr = float(r.atr14)
+    if strategy == "base_breakout" and pivot is not None:
+        return min(price * 0.995, max(float(pivot) - 1.20 * atr, float(e["low"].tail(10).min()) - 0.20 * atr))
+    if strategy == "reversal":
+        return min(price * 0.995, float(e["low"].tail(10).min()) - 0.25 * atr)
+    structural = min(float(r.ema20), float(r.sma50))
+    return min(price * 0.995, max(price - 2.50 * atr, structural - 0.50 * atr))
+
+
+def _failed(conditions: Sequence[tuple[str, bool]]) -> list[str]:
+    return [label for label, ok in conditions if not bool(ok)]
+
+
+def _watch_overlay(ev: _Evaluation, regime: MarketRegime, strategy: str) -> _Evaluation:
+    """Convert valid continuation setups to WATCH during weak regimes.
+
+    V3 hard-blocked five strategies whenever the market gate was closed. That
+    made a healthy scan look broken. V3.1 preserves technically valid setups,
+    labels them WATCH, and adds explicit market-risk warnings.
+    """
+    if not ev.passed:
+        return ev
+    weak = regime.state == "risk_off" or regime.panic_rebound
+    if weak and strategy != "reversal":
+        ev.status = "WATCH"
+        warning = "market regime is risk-off; watch only, reduce size and require confirmation"
+        if warning not in ev.warnings:
+            ev.warnings.append(warning)
+    elif regime.state == "recovery" and strategy in {"trending", "early_uptrend", "gaining_momentum", "base_breakout", "meta_leader"}:
+        warning = "market is in recovery rather than a confirmed broad uptrend"
+        if warning not in ev.warnings:
+            ev.warnings.append(warning)
+    return ev
+
+
+def _evaluate(r: pd.Series, strategy: str, regime: MarketRegime, cfg: ScreenerConfig) -> _Evaluation:
+    tradable, tradability_failures = _tradable(r, cfg)
+    if not tradable:
+        return _Evaluation(strategy, False, failed_conditions=tradability_failures)
+
+    leadership = _weighted(
+        {
+            "rs126": r.rs126_pctile,
+            "rs63": r.rs63_pctile,
+            "rs20": r.rs20_pctile,
+            "residual_quality": r.resid_sharpe_pctile,
+            "sector": r.sector_pctile,
+        },
+        {"rs126": 0.36, "rs63": 0.24, "rs20": 0.18, "residual_quality": 0.12, "sector": 0.10},
+    )
+    trend = _trend_structure_score(r)
+    accumulation = _accumulation_score(r)
+    risk = _risk_score(r, cfg)
+    liquidity = float(r.liquidity_pctile)
+
+    if strategy == "trending":
+        conditions = [
+            ("price/average alignment", r.close > r.ema20 > r.sma50 > r.sma200),
+            ("positive SMA50 slope", r.sma50_slope20 > 0),
+            ("non-negative SMA200 slope", r.sma200_slope40 >= -0.0002),
+            ("six-month relative strength", r.rs126_pctile >= cfg.continuation_rs126_percentile),
+            ("three-month relative strength", r.rs63_pctile >= 55),
+            ("within 25% of 52-week high", r.near_52_high >= 0.75),
+            ("efficient trend path", r.trend_efficiency50 >= 0.20),
+            ("controlled 60-day drawdown", r.max_drawdown60 >= -cfg.max_trending_drawdown_60),
+            ("not overextended from EMA20", -0.75 <= r.distance_ema20_atr <= cfg.max_distance_ema20_atr),
+            ("distribution days controlled", r.distribution_days20 <= 5),
+        ]
+        failed = _failed(conditions)
+        if failed:
+            return _Evaluation(strategy, False, failed_conditions=failed)
+        score = _weighted(
+            {"leadership": leadership, "trend": trend, "accumulation": accumulation, "risk": risk, "liquidity": liquidity},
+            {"leadership": 0.38, "trend": 0.30, "accumulation": 0.12, "risk": 0.12, "liquidity": 0.08},
+        )
+        ev = _Evaluation(
+            strategy, True, score,
+            reasons=[
+                "beta-adjusted six-month leadership is above the Bursa median",
+                "EMA20, SMA50 and SMA200 are aligned with constructive slopes",
+                "price remains reasonably close to its 52-week high without excessive extension",
+                "trend efficiency and drawdown remain within controlled limits",
+            ],
+            warnings=["distribution pressure is elevated"] if r.distribution_days20 >= 4 else [],
+            stop=_stop_for(r, strategy),
+        )
+        return _watch_overlay(ev, regime, strategy)
+
+    if strategy == "early_uptrend":
+        e: pd.DataFrame = r.df
+        transition = _crossed_above(e["close"], e["sma50"], 30) or _crossed_above(e["ema20"], e["sma50"], 30) or _turned_positive_slope(e["sma50"], 20, 10)
+        conditions = [
+            ("recent trend transition", transition),
+            ("price above EMA20", r.close > r.ema20),
+            ("price above SMA50", r.close > r.sma50),
+            ("not extended above SMA50", r.close <= r.sma50 * 1.15),
+            ("SMA200 not materially falling", r.sma200_slope40 > -0.0010),
+            ("short-term relative strength", r.rs20_pctile >= 60),
+            ("medium-term relative strength", r.rs63_pctile >= 45),
+            ("positive residual momentum", r.resid20 > 0),
+            ("volume at least stable", r.volume_ratio5_20 >= 0.95),
+            ("up/down volume at least balanced", r.up_down_volume20 >= 0.95),
+            ("not deeply below 52-week high", r.near_52_high >= 0.50),
+            ("controlled recent drawdown", r.max_drawdown60 >= -cfg.max_early_drawdown_60),
+        ]
+        failed = _failed(conditions)
+        if failed:
+            return _Evaluation(strategy, False, failed_conditions=failed)
+        transition_score = _clip100(60 + r.rs20_pctile * 0.25 + max(0, r.volume_ratio5_20 - 1) * 45)
+        score = _weighted(
+            {"leadership": leadership, "transition": transition_score, "trend": trend, "accumulation": accumulation, "risk": risk},
+            {"leadership": 0.28, "transition": 0.28, "trend": 0.18, "accumulation": 0.16, "risk": 0.10},
+        )
+        ev = _Evaluation(
+            strategy, True, score,
+            reasons=[
+                "price, EMA20 or SMA50 has recently transitioned into an early uptrend",
+                "short-term beta-adjusted strength is positive before the stock becomes extended",
+                "the long-term average is not falling materially",
+                "volume and up/down volume are stable to constructive",
+            ],
+            pivot=float(r.pivot20), stop=_stop_for(r, strategy),
+        )
+        return _watch_overlay(ev, regime, strategy)
+
+    if strategy == "reversal":
+        e = r.df
+        reclaim20 = _crossed_above(e["close"], e["ema20"], 12)
+        reclaim50 = _crossed_above(e["close"], e["sma50"], 12)
+        breakout10 = bool(r.close > r.pivot10)
+        stop = _stop_for(r, strategy)
+        one_r = max(r.close - stop, 1e-9)
+        overhead_room_r = math.inf if not np.isfinite(r.sma200) or r.sma200 <= r.close else (r.sma200 - r.close) / one_r
+        conditions = [
+            ("meaningful prior correction", 0.10 <= r.prior_drawdown120 <= 0.50),
+            ("higher low", r.higher_low),
+            ("reclaimed average or broke 10-day high", reclaim20 or reclaim50 or breakout10),
+            ("confirmation above SMA50 or 10-day pivot", breakout10 or r.close > r.sma50),
+            ("positive residual momentum", r.resid20 > 0),
+            ("short-term relative strength", r.rs20_pctile >= 55),
+            ("volume confirmation", r.volume_ratio20 >= 1.00),
+            ("constructive close location", r.clv >= 0.55),
+            ("up/down volume not negative", r.up_down_volume20 >= 0.90),
+            ("SMA50 not collapsing", r.sma50_slope20 > -0.0020),
+            ("sufficient overhead room", overhead_room_r >= 1.2),
+        ]
+        failed = _failed(conditions)
+        if failed:
+            return _Evaluation(strategy, False, failed_conditions=failed)
+        confirmation = _weighted(
+            {
+                "tactical_rs": r.rs20_pctile,
+                "volume": _clip100(40 + r.volume_ratio20 * 32),
+                "close": r.clv * 100,
+                "room": _clip100(overhead_room_r / 3 * 100),
+                "accumulation": accumulation,
+            },
+            {"tactical_rs": 0.30, "volume": 0.20, "close": 0.15, "room": 0.15, "accumulation": 0.20},
+        )
+        score = _weighted(
+            {"confirmation": confirmation, "leadership": leadership, "risk": risk, "liquidity": liquidity},
+            {"confirmation": 0.45, "leadership": 0.25, "risk": 0.20, "liquidity": 0.10},
+        )
+        status = "WATCH" if regime.state == "risk_off" or regime.panic_rebound else "ACTIVE"
+        warnings = ["market regime is not supportive; treat as watch-only and reduce size"] if status == "WATCH" else []
+        return _Evaluation(
+            strategy, True, score, status=status,
+            reasons=[
+                "a meaningful correction has produced a higher low",
+                "price reclaimed a key average or broke the prior 10-day high",
+                "20-day beta-adjusted strength has turned positive",
+                "volume confirmation and overhead resistance room are adequate",
+            ],
+            warnings=warnings, pivot=float(r.pivot10), stop=stop,
+        )
+
+    if strategy == "gaining_momentum":
+        acceleration = all([
+            r.resid5 > 0,
+            r.resid20 > 0,
+            r.resid63_ex5 > -0.01,
+            r.resid20 * 3.0 > r.resid63_ex5 * 0.80,
+            r.resid5 * 4.0 > r.resid20 * 0.40,
+        ])
+        conditions = [
+            ("price above EMA20 and SMA50", r.close > r.ema20 > r.sma50),
+            ("residual momentum accelerating", acceleration),
+            ("short-term relative strength", r.rs20_pctile >= cfg.momentum_rs20_percentile),
+            ("medium-term relative strength", r.rs63_pctile >= 55),
+            ("volume at least stable", r.volume_ratio5_20 >= 1.00),
+            ("RSI in non-chasing range", 52 <= r.rsi14 <= 78),
+            ("not overextended from EMA20", r.distance_ema20_atr <= cfg.max_distance_ema20_atr),
+            ("20-day return below chase limit", r.ret20 <= cfg.max_momentum_return_20),
+            ("5-day return below chase limit", r.ret5 <= cfg.max_momentum_return_5),
+            ("trend path sufficiently efficient", r.trend_efficiency50 >= 0.18),
+        ]
+        failed = _failed(conditions)
+        if failed:
+            return _Evaluation(strategy, False, failed_conditions=failed)
+        acceleration_score = _weighted(
+            {
+                "rs20": r.rs20_pctile,
+                "rs63": r.rs63_pctile,
+                "volume": _clip100(42 + r.volume_ratio5_20 * 35),
+                "efficiency": _clip100(r.trend_efficiency50 * 190),
+            },
+            {"rs20": 0.35, "rs63": 0.25, "volume": 0.20, "efficiency": 0.20},
+        )
+        score = _weighted(
+            {"acceleration": acceleration_score, "leadership": leadership, "trend": trend, "risk": risk},
+            {"acceleration": 0.38, "leadership": 0.30, "trend": 0.20, "risk": 0.12},
+        )
+        ev = _Evaluation(
+            strategy, True, score,
+            reasons=[
+                "5- and 20-day beta-adjusted returns are positive",
+                "recent residual momentum is accelerating rather than only following the market",
+                "volume is stable or expanding and trend efficiency is constructive",
+                "RSI, recent returns and EMA20 distance remain below chase limits",
+            ],
+            stop=_stop_for(r, strategy),
+        )
+        return _watch_overlay(ev, regime, strategy)
+
+    if strategy == "base_breakout":
+        base = _detect_base(r.df, cfg)
+        if not base.valid or base.pivot is None:
+            return _Evaluation(strategy, False, failed_conditions=[base.reason or "no valid contracted base"])
+        above = _safe_div(r.close - base.pivot, base.pivot, np.nan)
+        conditions = [
+            ("price at or just above pivot", 0 <= above <= cfg.breakout_max_above_pivot),
+            ("breakout volume confirmation", r.volume_ratio20 >= cfg.breakout_min_volume_ratio),
+            ("constructive breakout close", r.clv >= 0.60),
+            ("opening gap within limit", abs(r.gap_pct) <= cfg.breakout_max_gap_pct),
+            ("six-month relative strength", r.rs126_pctile >= 60),
+            ("short-term relative strength", r.rs20_pctile >= 55),
+            ("within 35% of 52-week high", r.near_52_high >= 0.65),
+            ("sector rank acceptable when available", (not bool(r.sector_available)) or r.sector_pctile >= cfg.min_sector_percentile),
+        ]
+        failed = _failed(conditions)
+        if failed:
+            return _Evaluation(strategy, False, failed_conditions=failed)
+        breakout_quality = _weighted(
+            {
+                "base": base.quality,
+                "volume": _clip100(35 + r.volume_ratio20 * 35),
+                "close": r.clv * 100,
+                "leadership": leadership,
+                "risk": risk,
+            },
+            {"base": 0.28, "volume": 0.22, "close": 0.12, "leadership": 0.28, "risk": 0.10},
+        )
+        stop = _stop_for(r, strategy, base.pivot)
+        ev = _Evaluation(
+            strategy, True, breakout_quality,
+            reasons=[
+                f"price broke a {base.days}-session base after a prior advance",
+                f"base depth is {base.depth * 100:.1f}% with volatility and volume contraction",
+                f"breakout volume is at least {cfg.breakout_min_volume_ratio:.1f}× normal with a constructive close",
+                "beta-adjusted leadership and sector rank support the breakout",
+            ],
+            pivot=base.pivot, stop=stop,
+            entry_low=float(base.pivot),
+            entry_high=float(base.pivot * (1 + cfg.breakout_max_above_pivot)),
+            components={"base_quality": base.quality},
+        )
+        return _watch_overlay(ev, regime, strategy)
+
+    if strategy == "meta_leader":
+        market_ok = regime.state in {"bull", "neutral"} and regime.breadth_above_50 >= cfg.neutral_breadth50 and not regime.panic_rebound
+        expansion_ok = all([
+            r.resid20 > 0,
+            r.resid20 * 3.0 > r.resid63_ex5 * 0.80,
+            r.volume_ratio20 >= 1.05,
+            r.atr_contraction10_50 <= 1.25,
+        ])
+        trend_ok = all([
+            r.close > r.ema20 > r.sma50 > r.sma200,
+            r.sma50_slope20 > 0,
+            r.sma200_slope40 >= -0.0001,
+            r.near_52_high >= 0.82,
+            r.trend_efficiency50 >= 0.22,
+        ])
+        accumulation_ok = all([
+            r.up_down_volume20 >= 1.10,
+            r.obv_near_60_high,
+            r.accumulation_days20 >= r.distribution_days20,
+            r.distribution_days20 <= 4,
+        ])
+        conditions = [
+            ("expansion component", expansion_ok),
+            ("trend component", trend_ok),
+            ("accumulation component", accumulation_ok),
+            ("elite six-month relative strength", r.rs126_pctile >= cfg.leader_rs126_percentile),
+            ("strong three-month relative strength", r.rs63_pctile >= 70),
+            ("sector leadership when available", (not bool(r.sector_available)) or r.sector_pctile >= 55),
+            ("not overextended", r.distance_ema20_atr <= 2.5),
+        ]
+        failed = _failed(conditions)
+        if failed:
+            return _Evaluation(strategy, False, failed_conditions=failed)
+        meta_components = {
+            "market": _clip100(regime.score),
+            "expansion": _weighted(
+                {"rs20": r.rs20_pctile, "volume": _clip100(40 + r.volume_ratio20 * 35), "acceleration": _clip100(55 + r.resid20 * 1000)},
+                {"rs20": 0.40, "volume": 0.30, "acceleration": 0.30},
+            ),
+            "trend": trend,
+            "accumulation": accumulation,
+            "leadership": leadership,
+            "risk": risk,
+        }
+        score = _weighted(meta_components, {"market": 0.10, "expansion": 0.20, "trend": 0.22, "accumulation": 0.18, "leadership": 0.24, "risk": 0.06})
+        warnings = ["technical-only M.E.T.A.; no fundamental data is claimed or inferred"]
+        if not market_ok:
+            warnings.append("M — market component is not confirmed; candidate is watch-only")
+        ev = _Evaluation(
+            strategy, True, score,
+            status="ACTIVE" if market_ok else "WATCH",
+            reasons=[
+                "M — market state is included explicitly in the score and status",
+                "E — beta-adjusted momentum and trading activity are expanding",
+                "T — price, moving averages and slopes confirm technical leadership",
+                "A — up-volume, OBV and accumulation days indicate sustained demand",
+            ],
+            warnings=warnings, stop=_stop_for(r, strategy), components=meta_components,
+        )
+        return _watch_overlay(ev, regime, strategy)
+
+    raise ValueError(f"Unknown strategy: {strategy}")
+
+def _candidate_from_eval(r: pd.Series, ev: _Evaluation, regime: MarketRegime) -> Candidate:
+    price = float(r.close)
+    stop = float(ev.stop if ev.stop is not None else _stop_for(r, ev.strategy, ev.pivot))
+    stop = min(stop, price * 0.995)
+    risk_pct = max(0.0, (price - stop) / price * 100.0)
+    entry_low = float(ev.entry_low if ev.entry_low is not None else max(price - 0.35 * r.atr14, 0.001))
+    entry_high = float(ev.entry_high if ev.entry_high is not None else price + 0.25 * r.atr14)
+    return Candidate(
+        symbol=str(r.symbol),
+        name=str(r["name"]),
+        sector=str(r.sector),
+        strategy=ev.strategy,
+        strategy_label=STRATEGY_LABELS[ev.strategy],
+        score=round(float(ev.score), 1),
+        priority_score=round(float(ev.score), 1),
+        rank=0,
+        strategy_percentile=0.0,
+        confluence_count=1,
+        confluence=[ev.strategy],
+        status=ev.status,
+        price=round(price, 3),
+        entry_low=round(entry_low, 3),
+        entry_high=round(entry_high, 3),
+        pivot=round(float(ev.pivot), 3) if ev.pivot is not None and np.isfinite(ev.pivot) else None,
+        suggested_stop=round(stop, 3),
+        risk_pct=round(risk_pct, 2),
+        max_order_value_5pct_adv=round(float(r.median_turnover20) * 0.05, 0),
+        market_regime=regime.state,
+        reasons=list(ev.reasons),
+        warnings=list(ev.warnings),
+        metrics={
+            "beta126": round(float(r.beta), 3) if np.isfinite(r.beta) else None,
+            "residual_momentum_126_ex5": round(float(r.resid126_ex5) * 100, 2),
+            "residual_momentum_63_ex5": round(float(r.resid63_ex5) * 100, 2),
+            "residual_momentum_20": round(float(r.resid20) * 100, 2),
+            "rs126_percentile": round(float(r.rs126_pctile), 1),
+            "rs63_percentile": round(float(r.rs63_pctile), 1),
+            "rs20_percentile": round(float(r.rs20_pctile), 1),
+            "sector_percentile": round(float(r.sector_pctile), 1),
+            "liquidity_percentile": round(float(r.liquidity_pctile), 1),
+            "median_turnover20": round(float(r.median_turnover20), 0),
+            "natr14_pct": round(float(r.natr14) * 100, 2),
+            "rsi14": round(float(r.rsi14), 1),
+            "adx14": round(float(r.adx14), 1),
+            "trend_efficiency50": round(float(r.trend_efficiency50), 3),
+            "max_drawdown60_pct": round(float(r.max_drawdown60) * 100, 2),
+            "distance_ema20_atr": round(float(r.distance_ema20_atr), 2),
+            "volume_ratio20": round(float(r.volume_ratio20), 2),
+            "up_down_volume20": round(float(r.up_down_volume20), 2),
+            "distribution_days20": int(r.distribution_days20),
+            "near_52_week_high_pct": round(float(r.near_52_high) * 100, 1),
+            **{k: round(float(v), 1) for k, v in ev.components.items() if np.isfinite(v)},
+        },
+    )
+
+
+def screen_universe(
+    prices: Mapping[str, pd.DataFrame],
+    benchmark: pd.DataFrame,
+    metadata: Mapping[str, Mapping[str, Any]] | None = None,
+    config: ScreenerConfig | None = None,
+    strategies: Iterable[str] = STRATEGIES,
+    as_of: Any | None = None,
+    diagnostics: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Screen a point-in-time universe and return ranked candidates.
+
+    Pass an empty ``diagnostics`` dict to receive market-regime, tradability,
+    structural-match, score-threshold and rejection counters. Existing callers
+    that only need the candidate list remain fully compatible.
+    """
+    cfg = config or ScreenerConfig()
+    metadata = metadata or {}
+    wanted = tuple(str(s) for s in strategies)
+    unknown = set(wanted) - set(STRATEGIES)
+    if unknown:
+        raise ValueError(f"Unknown strategies: {sorted(unknown)}")
+
+    if diagnostics is not None:
+        diagnostics.clear()
+
+    regime = market_regime(benchmark, prices, config=cfg, as_of=as_of)
+    rows: list[dict[str, Any]] = []
+    feature_errors = 0
+    feature_rejected = 0
+    for symbol, raw in prices.items():
+        try:
+            row = _feature_row(symbol, raw, benchmark, metadata.get(symbol, {}), cfg, as_of)
+            if row is not None:
+                rows.append(row)
+            else:
+                feature_rejected += 1
+        except (ValueError, TypeError, KeyError, IndexError, np.linalg.LinAlgError, FloatingPointError):
+            feature_errors += 1
+
+    base_diag: dict[str, Any] = {
+        "version": "3.1-balanced",
+        "input_stocks": len(prices),
+        "feature_eligible": len(rows),
+        "feature_rejected": feature_rejected,
+        "feature_errors": feature_errors,
+        "market_regime": asdict(regime),
+        "config": {
+            "min_score": cfg.min_score,
+            "min_meta_score": cfg.min_meta_score,
+            "hard_min_median_turnover_20": cfg.hard_min_median_turnover_20,
+            "min_median_volume_20": cfg.min_median_volume_20,
+            "continuation_rs126_percentile": cfg.continuation_rs126_percentile,
+            "momentum_rs20_percentile": cfg.momentum_rs20_percentile,
+            "breakout_min_volume_ratio": cfg.breakout_min_volume_ratio,
+        },
+    }
+    if not rows:
+        base_diag["tradability"] = {"tradable": 0, "rejected": 0, "top_rejections": {}}
+        base_diag["strategies"] = {s: {"structural_matches": 0, "score_passes": 0, "published": 0, "below_score": 0, "top_rejections": {}} for s in wanted}
+        if diagnostics is not None:
+            diagnostics.update(base_diag)
+        return []
+
+    universe = pd.DataFrame(rows)
+    universe["rs126_pctile"] = _pct_rank(universe["resid126_ex5"])
+    universe["rs63_pctile"] = _pct_rank(universe["resid63_ex5"])
+    universe["rs20_pctile"] = _pct_rank(universe["resid20"])
+    universe["resid_sharpe_pctile"] = _pct_rank(universe["resid_sharpe126"])
+    universe["liquidity_pctile"] = _pct_rank(np.log1p(universe["median_turnover20"]))
+
+    sector_valid = universe["sector"].ne("Unclassified") & universe["sector"].notna()
+    sector_count = int(universe.loc[sector_valid, "sector"].nunique())
+    if sector_count >= 3:
+        sector_momentum = universe.loc[sector_valid].groupby("sector")["resid63_ex5"].median()
+        sector_rank = _pct_rank(sector_momentum)
+        universe["sector_pctile"] = universe["sector"].map(sector_rank).fillna(50.0)
+        universe["sector_available"] = sector_valid
+    else:
+        universe["sector_pctile"] = 50.0
+        universe["sector_available"] = False
+
+    from collections import Counter
+    tradability_rejections: Counter[str] = Counter()
+    tradable_count = 0
+    for _, row in universe.iterrows():
+        ok, failures = _tradable(row, cfg)
+        if ok:
+            tradable_count += 1
+        else:
+            tradability_rejections.update(failures)
+
+    strategy_stats: dict[str, dict[str, Any]] = {
+        strategy: {
+            "structural_matches": 0,
+            "score_passes": 0,
+            "published": 0,
+            "below_score": 0,
+            "rejections": Counter(),
+        }
+        for strategy in wanted
+    }
+
+    candidates: list[Candidate] = []
+    for _, row in universe.iterrows():
+        for strategy in wanted:
+            ev = _evaluate(row, strategy, regime, cfg)
+            stats = strategy_stats[strategy]
+            if not ev.passed:
+                stats["rejections"].update(ev.failed_conditions or ["other structural condition"])
+                continue
+            stats["structural_matches"] += 1
+            threshold = cfg.min_meta_score if strategy == "meta_leader" else cfg.min_score
+            if ev.score >= threshold:
+                stats["score_passes"] += 1
+                candidates.append(_candidate_from_eval(row, ev, regime))
+            else:
+                stats["below_score"] += 1
+                stats["rejections"].update([f"score below {threshold:.0f}"])
+
+    if candidates:
+        by_symbol: dict[str, list[str]] = {}
+        for c in candidates:
+            by_symbol.setdefault(c.symbol, []).append(c.strategy)
+        for c in candidates:
+            confluence = sorted(set(by_symbol[c.symbol]))
+            c.confluence = confluence
+            c.confluence_count = len(confluence)
+            c.priority_score = round(min(100.0, c.score + max(0, len(confluence) - 1) * 2.5), 1)
+
+    final: list[Candidate] = []
+    for strategy in wanted:
+        group = [c for c in candidates if c.strategy == strategy]
+        if not group:
+            continue
+        group.sort(key=lambda c: (-c.priority_score, -c.score, -c.metrics["rs126_percentile"], c.symbol))
+        scores = pd.Series([c.priority_score for c in group], dtype=float)
+        pctiles = scores.rank(pct=True, method="average") * 100.0
+        for i, (c, pctl) in enumerate(zip(group, pctiles), start=1):
+            c.rank = i
+            c.strategy_percentile = round(float(pctl), 1)
+        if len(universe) >= cfg.min_universe_for_percentile_filter:
+            cutoff = max(1, math.ceil(len(group) * cfg.keep_top_fraction_per_strategy))
+        else:
+            cutoff = len(group)
+        group = group[: min(cutoff, cfg.max_results_per_strategy)]
+        strategy_stats[strategy]["published"] = len(group)
+        final.extend(group)
+
+    final.sort(key=lambda c: (-c.priority_score, c.strategy, c.rank, c.symbol))
+
+    base_diag["tradability"] = {
+        "tradable": tradable_count,
+        "rejected": len(universe) - tradable_count,
+        "top_rejections": dict(tradability_rejections.most_common(8)),
+    }
+    base_diag["strategies"] = {}
+    for strategy, stats in strategy_stats.items():
+        base_diag["strategies"][strategy] = {
+            "structural_matches": int(stats["structural_matches"]),
+            "score_passes": int(stats["score_passes"]),
+            "published": int(stats["published"]),
+            "below_score": int(stats["below_score"]),
+            "top_rejections": dict(stats["rejections"].most_common(8)),
+        }
+    if diagnostics is not None:
+        diagnostics.update(base_diag)
+    return [c.to_dict() for c in final]
+
+
+__all__ = [
+    "STRATEGIES",
+    "STRATEGY_LABELS",
+    "ScreenerConfig",
+    "MarketRegime",
+    "BasePattern",
+    "Candidate",
+    "enrich",
+    "market_regime",
+    "screen_universe",
+]

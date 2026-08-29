@@ -1,0 +1,21 @@
+name = "bursamusangking-app"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# Replace the id after you run: wrangler kv namespace create SCANS
+[[kv_namespaces]]
+binding = "SCANS"
+id = "PUT_YOUR_KV_NAMESPACE_ID_HERE"
+
+[vars]
+GITHUB_REPO = "YOUR_GITHUB_USERNAME/BursaMusangKing-Recovered"
+WORKFLOW_FILE = "app-scan.yml"
+GITHUB_REF = "main"
+# Lock this to your Pages URL once deployed, e.g.
+# ALLOWED_ORIGIN = "https://bursamusangking-app.pages.dev"
+ALLOWED_ORIGIN = "*"
+
+# Secrets are NOT set here. Run these once:
+#   wrangler secret put GITHUB_TOKEN     (fine-grained PAT, Actions: read+write)
+#   wrangler secret put PUBLISH_TOKEN    (any long random string)
+#   wrangler secret put RUN_TOKEN        (optional, protects /run)

@@ -1,0 +1,17 @@
+{
+  "name": "BursaMusangKing",
+  "short_name": "MusangKing",
+  "description": "Bursa Malaysia V5.1 Balanced six-strategy screener",
+  "id": "/",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111110",
+  "theme_color": "#111110",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
