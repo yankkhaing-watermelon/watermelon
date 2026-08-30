@@ -42,9 +42,10 @@ main{flex:1;padding:12px 16px 0;overflow-x:hidden;
   display:flex;flex-direction:column;min-height:0}
 /* only the visible section is a flex child (others are [hidden]) */
 main>section{flex:1 1 auto;min-height:0}
-/* list view fills main and pins the chips to the bottom */
+/* list view fills main; the list scrolls internally (capped by .scroller
+   max-height), and the Scan-date line + chips stay pinned to the bottom */
 #view-list{display:flex;flex-direction:column}
-#view-list .scroller{flex:1 1 auto;max-height:none;min-height:0}
+#view-list #updated{margin-top:auto}
 .meta{margin:0 0 6px;font-size:12px;color:var(--muted)}
 .banner{display:none;margin:0 0 10px;padding:8px 12px;border-radius:var(--radius);
   background:var(--accent-bg);color:var(--accent);font-size:12.5px}
