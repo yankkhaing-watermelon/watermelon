@@ -10,7 +10,7 @@
  *      whole install and leaves the PREVIOUS worker in charge. Add files
  *      individually and tolerate misses.
  */
-const CACHE = "bmk-shell-v54";
+const CACHE = "bmk-shell-v55";
 const SHELL = ["./", "./index.html", "./app.js", "./charts.js", "./config.js",
                "./manifest.json"];
 
