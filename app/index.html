@@ -38,7 +38,13 @@ header h1{margin:0;font-size:16px;font-weight:600;letter-spacing:-.01em;
 .run-top:active{transform:scale(.96)}
 .run-top:disabled{opacity:.5;cursor:default}
 .header-actions{display:flex;align-items:center;gap:8px}
-main{flex:1;padding:12px 16px 0;overflow-x:hidden}
+main{flex:1;padding:12px 16px 0;overflow-x:hidden;
+  display:flex;flex-direction:column;min-height:0}
+/* only the visible section is a flex child (others are [hidden]) */
+main>section{flex:1 1 auto;min-height:0}
+/* list view fills main and pins the chips to the bottom */
+#view-list{display:flex;flex-direction:column}
+#view-list .scroller{flex:1 1 auto;max-height:none;min-height:0}
 .meta{margin:0 0 6px;font-size:12px;color:var(--muted)}
 .banner{display:none;margin:0 0 10px;padding:8px 12px;border-radius:var(--radius);
   background:var(--accent-bg);color:var(--accent);font-size:12.5px}
