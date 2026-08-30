@@ -21,7 +21,8 @@ depend on the suspended GitHub account.
 1. GitHub Actions discovers the full Bursa universe from TradingView.
 2. TradingView/tvDatafeed downloads daily history as the primary source.
 3. Only symbols unresolved by TradingView are sent to a throttled Yahoo fallback.
-4. The embedded `bmk_screener_v3.py` screens with V5.1 Balanced rules.
+4. The embedded `screener.py` engine screens with the six V5.1 Balanced rules
+   and `rank.py` scores each hit's strength (0-100).
 5. `export_scan.py` publishes `latest.json` and `history.json` to your Worker.
 6. The Worker stores the four JSON payloads in your existing `SCANS` KV.
 7. The static PWA reads the Worker API.
@@ -130,9 +131,8 @@ Then open the PWA and verify:
 
 ```bash
 pip install -r requirements.txt
-pytest -q tests_screener_v51.py
 pytest -q test_data_fetcher.py
-python -m py_compile export_scan.py data_fetcher.py universe.py signal_log.py
+python -m py_compile export_scan.py screener.py rank.py data_fetcher.py universe.py signal_log.py
 ```
 
 Serve the PWA locally with:

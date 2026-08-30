@@ -1,0 +1,307 @@
+From 2dff87c0e479ba09f283c1af3c50acbee205d1f2 Mon Sep 17 00:00:00 2001
+From: Khai <yankhaing@gmail.com>
+Date: Sun, 30 Aug 2026 05:13:48 +0000
+Subject: [PATCH] Run all six screeners; vendor shared rank.py into kernel;
+ re-pin SOURCE_SHA
+
+Derive the strategy set from the vendored config.STRATEGIES so the terminal runs
+EXACTLY the six screeners watermelon runs (was three), and can never silently
+drift. Move rank.py under kernel/ as vendored engine code (byte-identical to
+watermelon/rank.py), extended to score all six screeners, so both repos assign
+the identical strength to the same (symbol, strategy). Re-pin SOURCE_SHA to the
+matching watermelon commit.
+
+Verified on shared synthetic data: identical screened stock list and identical
+strength scores across both repos.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01GhJ5UwTRgUG7UqBMmeL1Kh
+---
+ README.md         |   9 ++--
+ kernel/SOURCE_SHA |   2 +-
+ kernel/rank.py    | 106 ++++++++++++++++++++++++++++++++++++++++++++++
+ pipeline.py       |  24 ++++++++---
+ rank.py           |  81 -----------------------------------
+ 5 files changed, 130 insertions(+), 92 deletions(-)
+ create mode 100644 kernel/rank.py
+ delete mode 100644 rank.py
+
+diff --git a/README.md b/README.md
+index f9b73db..cc44a40 100644
+--- a/README.md
++++ b/README.md
+@@ -6,9 +6,12 @@ and serves data and runs the buy/sell state machine; THIS repo produces the
+ data via GitHub Actions and POSTs it to the worker.
+ 
+ ## Pieces
+-- `kernel/`      vendored screening engine from watermelon (pinned SOURCE_SHA)
+-- `rank.py`      strength score (0-100) per strategy
+-- `pipeline.py`  fetches Bursa, runs Trending/Momentum/M.E.T.A., POSTs to worker
++- `kernel/`      vendored engine from watermelon (screener + `rank.py` strength
++                 scorer), pinned by SOURCE_SHA and kept byte-identical
++- `pipeline.py`  fetches Bursa, runs all six screeners (Trending / Early Uptrend
++                 / Confirmed Reversal / Gaining Momentum / Base Breakout /
++                 M.E.T.A. Technical Leader) — the identical set watermelon runs —
++                 scores strength via `kernel/rank.py`, then POSTs to worker
+ - `.github/workflows/close.yml`         official, 17:18 MYT  -> /api/publish
+ - `.github/workflows/strategy-scan.yml` preview (Run button) -> /api/preview
+ 
+diff --git a/kernel/SOURCE_SHA b/kernel/SOURCE_SHA
+index 201a68f..6543c69 100644
+--- a/kernel/SOURCE_SHA
++++ b/kernel/SOURCE_SHA
+@@ -1 +1 @@
+-a8643ced7d3c53d831a228f59ad7bd256fbdf9af
++ab0d0bd5956f8724b47c12e74ff532dfefcbf8ee
+diff --git a/kernel/rank.py b/kernel/rank.py
+new file mode 100644
+index 0000000..e9ed28f
+--- /dev/null
++++ b/kernel/rank.py
+@@ -0,0 +1,106 @@
++"""
++Strength ranking layer (shared engine module).
++
++The screening kernel produces *qualification* (which symbols pass each of the
++six screeners) and the raw indicator values (rsi/adx/vol_ratio/roc10); it
++explicitly leaves `score = None`. This module turns those raw values into a
++0-100 strength score so any consumer can sort the screened list strongest-first.
++
++This file is part of the shared engine: watermelon owns the source copy and
++StrategyTerminal vendors it verbatim into kernel/ (pinned by SOURCE_SHA), exactly
++like screener.py / config.py / indicators.py. Keeping it shared guarantees both
++repos assign the IDENTICAL strength score to the same (symbol, strategy), so the
++screened list ranks the same in both apps. Edit it here in watermelon and re-pin.
++
++Formula (accepted 2026-08; extended to all six screeners 2026-08):
++
++    trending         : 0.45*ADX_n + 0.30*RSI_n  + 0.25*VOL_n
++    early_uptrend    : 0.35*VOL_n + 0.30*RSI_n   + 0.20*ROC_n + 0.15*ADX_n
++    reversal         : 0.40*ROC_n + 0.30*RSI_n   + 0.30*VOL_n
++    gaining_momentum : 0.40*VOL_n + 0.35*ROC_n   + 0.25*ADX_n
++    base_breakout    : 0.50*VOL_n + 0.30*ROC_n   + 0.20*ADX_n
++    meta_leader      : 0.40*ADX_n + 0.30*HI52_n  + 0.30*VOL_n
++
++Each *_n is a bounded 0-100 scaler (see SCALERS). The weights follow each
++screener's economic intent: fresh trends and breakouts lead on volume
++confirmation, reversals lead on the momentum flip (ROC/RSI), established trends
++and leaders lead on ADX. Every one of the six screeners has a dedicated score,
++so the whole screened list can be ranked strongest-first. Tune the anchor points
++here; nothing else in either pipeline needs to change.
++
++NOTE: these numbers are the engine's own definition. They will NOT reproduce the
++exact "Strength" values from the previous workers.dev build, whose formula was
++not recoverable. Everything upstream of this file (matches + indicators) is
++bit-identical to the kernel.
++"""
++from __future__ import annotations
++
++import math
++from typing import Any
++
++import pandas as pd
++
++
++# Bump when the formula or scalers change, so both repos stamp the same model.
++MODEL = "strength-v1.1.0"
++
++
++# ---- bounded linear scalers: value <= lo -> 0, value >= hi -> 100 ----------
++SCALERS = {
++    "adx": (15.0, 50.0),   # ADX 15 -> 0, 50 -> 100
++    "vol": (1.0, 3.0),     # vol_ratio 1x -> 0, 3x -> 100
++    "roc": (0.0, 15.0),    # ROC10 0% -> 0, 15% -> 100
++    "rsi": (50.0, 75.0),   # RSI 50 -> 0, 75 -> 100 (position within trend band)
++    "hi52": (0.80, 1.00),  # close/52w-high 0.80 -> 0, 1.00 -> 100
++}
++
++
++def _scale(value: Any, key: str) -> float:
++    lo, hi = SCALERS[key]
++    try:
++        v = float(value)
++    except (TypeError, ValueError):
++        return 0.0
++    if not math.isfinite(v) or hi <= lo:
++        return 0.0
++    return max(0.0, min(1.0, (v - lo) / (hi - lo))) * 100.0
++
++
++def _hi52_ratio(frame: pd.DataFrame) -> float:
++    """close / trailing 252-bar high. 1.0 == at the 52-week high."""
++    if frame is None or len(frame) == 0:
++        return 0.0
++    window = frame["high"].tail(252)
++    hi = float(window.max()) if len(window) else 0.0
++    close = float(frame["close"].iloc[-1])
++    return (close / hi) if hi > 0 else 0.0
++
++
++def strength(strategy: str, row: dict, frame: pd.DataFrame | None = None) -> float:
++    """Return a 0-100 strength score for one hit row under one strategy."""
++    adx = _scale(row.get("adx"), "adx")
++    vol = _scale(row.get("vol_ratio"), "vol")
++    roc = _scale(row.get("roc10"), "roc")
++    rsi = _scale(row.get("rsi"), "rsi")
++
++    if strategy == "trending":
++        s = 0.45 * adx + 0.30 * rsi + 0.25 * vol
++    elif strategy == "early_uptrend":
++        # a trend just starting: reward volume confirmation and building momentum
++        s = 0.35 * vol + 0.30 * rsi + 0.20 * roc + 0.15 * adx
++    elif strategy == "reversal":
++        # a momentum flip: reward the re-acceleration (ROC/RSI) plus volume
++        s = 0.40 * roc + 0.30 * rsi + 0.30 * vol
++    elif strategy == "gaining_momentum":
++        s = 0.40 * vol + 0.35 * roc + 0.25 * adx
++    elif strategy == "base_breakout":
++        # a volume-spike breakout from a base: volume dominates, then thrust
++        s = 0.50 * vol + 0.30 * roc + 0.20 * adx
++    elif strategy == "meta_leader":
++        hi52 = _scale(_hi52_ratio(frame), "hi52")
++        s = 0.40 * adx + 0.30 * hi52 + 0.30 * vol
++    else:
++        # unknown strategy; neutral fallback
++        s = (adx + vol) / 2.0
++
++    return round(max(0.0, min(100.0, s)), 1)
+diff --git a/pipeline.py b/pipeline.py
+index c81c20b..e7f8e34 100644
+--- a/pipeline.py
++++ b/pipeline.py
+@@ -1,9 +1,11 @@
+ """
+ Data pipeline for the Bursa Strategy Terminal worker (the D1 app).
+ 
+-Fetches the full Bursa daily universe via the vendored kernel, runs the three
+-strategies (Trending / Momentum / M.E.T.A.), scores strength, and POSTs a
+-payload in the EXACT shape the worker's /api/publish (official) and
++Fetches the full Bursa daily universe via the vendored kernel, runs the six
++screeners (Trending / Early Uptrend / Confirmed Reversal / Gaining Momentum /
++Base Breakout / M.E.T.A. Technical Leader) — the identical set watermelon runs —
++scores strength, and POSTs a payload in the EXACT shape the worker's
++/api/publish (official) and
+ /api/preview (intraday) endpoints expect. It does NOT write any files.
+ 
+ Modes:
+@@ -37,10 +39,18 @@ import screener              # noqa: E402  (kernel)
+ from indicators import enrich          # noqa: E402  (kernel)
+ from universe import get_universe      # noqa: E402  (kernel)
+ 
+-import rank                  # noqa: E402  (ours)
++import rank                  # noqa: E402  (kernel, vendored from watermelon)
+ 
+-STRATEGIES = ("trending", "gaining_momentum", "meta_leader")
+-RANKING_MODEL = "strength-v1.0.0"
++# Run EXACTLY the six screeners that watermelon runs. Deriving this from the
++# vendored kernel's config.STRATEGIES (rather than hard-coding a subset)
++# guarantees the terminal screens the identical universe as watermelon and can
++# never silently drift out of parity. Order follows the kernel definition:
++# trending, early_uptrend, reversal, gaining_momentum, base_breakout, meta_leader.
++STRATEGIES = tuple(
++    name for name, params in config.STRATEGIES.items()
++    if params.get("enabled", False)
++)
++RANKING_MODEL = rank.MODEL  # shared strength model version (see kernel/rank.py)
+ 
+ 
+ def _f(v: Any):
+@@ -73,7 +83,7 @@ def build_payload() -> dict[str, Any]:
+     by_code = {str(k).replace(".KL", "").upper(): v for k, v in prices.items()}
+     meta = _metadata()
+ 
+-    # 1) strategy hits (kernel), restricted to the three terminal strategies
++    # 1) strategy hits (kernel), all six screeners that watermelon runs
+     strat_params = {k: config.STRATEGIES[k] for k in STRATEGIES
+                     if config.STRATEGIES.get(k, {}).get("enabled", False)}
+     hits = screener.scan(by_code, strat_params)
+diff --git a/rank.py b/rank.py
+deleted file mode 100644
+index 34bb5d9..0000000
+--- a/rank.py
++++ /dev/null
+@@ -1,81 +0,0 @@
+-"""
+-Strength ranking layer.
+-
+-This is the ONLY piece of scoring that is not inherited from the watermelon
+-kernel. The kernel produces *qualification* (which symbols pass each strategy)
+-and the raw indicator values (rsi/adx/vol_ratio/roc10); it explicitly leaves
+-`score = None`. This module turns those raw values into a 0-100 strength score
+-so the terminal can sort strongest-first.
+-
+-Formula (accepted 2026-08):
+-
+-    trending : 0.45*ADX_n + 0.30*RSI_pos + 0.25*VOL_n
+-    momentum : 0.40*VOL_n + 0.35*ROC_n  + 0.25*ADX_n     (gaining_momentum)
+-    meta     : 0.40*ADX_n + 0.30*HI52_n + 0.30*VOL_n     (meta_leader)
+-
+-Each *_n is a bounded 0-100 scaler (see SCALERS). Tune the anchor points here;
+-nothing else in the pipeline needs to change.
+-
+-NOTE: these numbers are the terminal's own definition. They will NOT reproduce
+-the exact "Strength" values from the previous workers.dev build, whose formula
+-was not recoverable. Everything upstream of this file (matches + indicators) is
+-bit-identical to the kernel.
+-"""
+-from __future__ import annotations
+-
+-import math
+-from typing import Any
+-
+-import pandas as pd
+-
+-
+-# ---- bounded linear scalers: value <= lo -> 0, value >= hi -> 100 ----------
+-SCALERS = {
+-    "adx": (15.0, 50.0),   # ADX 15 -> 0, 50 -> 100
+-    "vol": (1.0, 3.0),     # vol_ratio 1x -> 0, 3x -> 100
+-    "roc": (0.0, 15.0),    # ROC10 0% -> 0, 15% -> 100
+-    "rsi": (50.0, 75.0),   # RSI 50 -> 0, 75 -> 100 (position within trend band)
+-    "hi52": (0.80, 1.00),  # close/52w-high 0.80 -> 0, 1.00 -> 100
+-}
+-
+-
+-def _scale(value: Any, key: str) -> float:
+-    lo, hi = SCALERS[key]
+-    try:
+-        v = float(value)
+-    except (TypeError, ValueError):
+-        return 0.0
+-    if not math.isfinite(v) or hi <= lo:
+-        return 0.0
+-    return max(0.0, min(1.0, (v - lo) / (hi - lo))) * 100.0
+-
+-
+-def _hi52_ratio(frame: pd.DataFrame) -> float:
+-    """close / trailing 252-bar high. 1.0 == at the 52-week high."""
+-    if frame is None or len(frame) == 0:
+-        return 0.0
+-    window = frame["high"].tail(252)
+-    hi = float(window.max()) if len(window) else 0.0
+-    close = float(frame["close"].iloc[-1])
+-    return (close / hi) if hi > 0 else 0.0
+-
+-
+-def strength(strategy: str, row: dict, frame: pd.DataFrame | None = None) -> float:
+-    """Return a 0-100 strength score for one hit row under one strategy."""
+-    adx = _scale(row.get("adx"), "adx")
+-    vol = _scale(row.get("vol_ratio"), "vol")
+-    roc = _scale(row.get("roc10"), "roc")
+-    rsi = _scale(row.get("rsi"), "rsi")
+-
+-    if strategy == "trending":
+-        s = 0.45 * adx + 0.30 * rsi + 0.25 * vol
+-    elif strategy == "gaining_momentum":
+-        s = 0.40 * vol + 0.35 * roc + 0.25 * adx
+-    elif strategy == "meta_leader":
+-        hi52 = _scale(_hi52_ratio(frame), "hi52")
+-        s = 0.40 * adx + 0.30 * hi52 + 0.30 * vol
+-    else:
+-        # not one of the three terminal strategies; neutral fallback
+-        s = (adx + vol) / 2.0
+-
+-    return round(max(0.0, min(100.0, s)), 1)
+-- 
+2.43.0
+
