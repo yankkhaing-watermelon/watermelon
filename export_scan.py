@@ -22,6 +22,7 @@ import requests
 
 import config
 import data_fetcher
+import rank
 import screener
 from indicators import enrich
 from signal_log import update
@@ -145,6 +146,13 @@ def run(do_publish: bool = False) -> dict[str, Any]:
         if frame is None:
             continue
         meta = metadata.get(sym, {})
+        # Strength (0-100) per hitting strategy, via rank.py. For the three
+        # screeners shared with StrategyTerminal (trending, gaining_momentum,
+        # meta_leader) the score is identical to that repo, so those three
+        # produce the same stocks in the same strength order in both apps.
+        strat_strength = {st: rank.strength(st, r, frame) for st in strat_of[sym]}
+        best_strat = max(strat_strength, key=strat_strength.get)
+        strength_score = strat_strength[best_strat]
         stocks.append({
             "symbol": sym,
             "name": str(meta.get("name") or sym),
@@ -159,11 +167,17 @@ def run(do_publish: bool = False) -> dict[str, Any]:
             "vol_ratio": _num(r.get("vol_ratio"), 2),
             "roc10": _num(r.get("roc10"), 2),
             "change_pct": _change_pct(frame),
+            "strength_score": strength_score,
+            "strength_strategy": best_strat,
+            "strength_by_strategy": strat_strength,
+            "strength_model": rank.MODEL,
             "is_new": is_new.get(sym, False),
             "spark": _spark(frame, SPARK_BARS),
         })
 
-    stocks.sort(key=lambda s: -_finite(s.get("vol_ratio")))
+    # Strongest first. Ties broken by volume ratio so ordering stays stable.
+    stocks.sort(key=lambda s: (-_finite(s.get("strength_score")),
+                               -_finite(s.get("vol_ratio"))))
 
     history = {s["symbol"]: _series(by_code[s["symbol"]], DETAIL_BARS) for s in stocks}
     now = datetime.now(timezone.utc)
@@ -172,6 +186,7 @@ def run(do_publish: bool = False) -> dict[str, Any]:
         "engine": "BursaMusangKing Absolute-TA (restored)", "version": "old-restore-1.0",
         "market": config.MARKET, "market_name": config.MARKET_NAME, "currency": config.CURRENCY,
         "stocks_screened": len(prices), "total_hits": len(stocks), "new_hits": new_count,
+        "ranking_model": rank.MODEL, "sorted_by": "strength_score",
         "strategies": [{"key": s, "label": STRATEGY_LABELS[s],
                         "count": sum(s in row["strategies"] for row in stocks)} for s in STRATEGIES],
         "stocks": stocks,
