@@ -1,15 +1,16 @@
-From ab0d0bd5956f8724b47c12e74ff532dfefcbf8ee Mon Sep 17 00:00:00 2001
-From: Khai <yankhaing@gmail.com>
-Date: Sun, 30 Aug 2026 05:13:13 +0000
-Subject: [PATCH] Share strength engine across repos; run all six screeners;
- retire bmk_screener_v3
+From aee13861f06040bcdd0ea60344fcf86e5e08c700 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 30 Aug 2026 05:44:06 +0000
+Subject: [PATCH] Add shared strength ranking; sort by strength; retire
+ bmk_screener_v3
 
-Add rank.py as a shared engine module (strength 0-100 for all six screeners)
-and wire it into export_scan.py: every hit now carries a strength_score and the
-screened list is sorted strongest-first (was volume-ratio). This is the source
-copy that StrategyTerminal vendors verbatim into kernel/, so both repos assign
-the identical strength to the same (symbol, strategy) and produce a 100%
-matching, identically ranked screened list.
+Add rank.py and wire it into export_scan.py so every hit carries a
+strength_score and the screened list is sorted strongest-first (was volume
+ratio). The three screeners watermelon shares with the StrategyTerminal repo -
+trending, gaining_momentum (Momentum) and meta_leader (M.E.T.A.) - use formulas
+byte-identical to StrategyTerminal/rank.py, so those three produce the SAME
+stocks in the SAME strength order in both apps. The other three screeners
+(early_uptrend, reversal, base_breakout) remain watermelon-only.
 
 Drop the retired bmk_screener_v3.py and its tests_screener_v51.py; the live
 scan and backtest both use the screener.py CHECKS engine.
@@ -19,10 +20,10 @@ Claude-Session: https://claude.ai/code/session_01GhJ5UwTRgUG7UqBMmeL1Kh
 ---
  README.md             |    6 +-
  bmk_screener_v3.py    | 1276 -----------------------------------------
- export_scan.py        |   16 +-
- rank.py               |  106 ++++
+ export_scan.py        |   17 +-
+ rank.py               |  109 ++++
  tests_screener_v51.py |  257 ---------
- 5 files changed, 124 insertions(+), 1537 deletions(-)
+ 5 files changed, 128 insertions(+), 1537 deletions(-)
  delete mode 100644 bmk_screener_v3.py
  create mode 100644 rank.py
  delete mode 100644 tests_screener_v51.py
@@ -1335,7 +1336,7 @@ index d17afe2..0000000
 -    "screen_universe",
 -]
 diff --git a/export_scan.py b/export_scan.py
-index 5a31d21..f1abe7a 100644
+index 5a31d21..76955c2 100644
 --- a/export_scan.py
 +++ b/export_scan.py
 @@ -22,6 +22,7 @@ import requests
@@ -1346,20 +1347,21 @@ index 5a31d21..f1abe7a 100644
  import screener
  from indicators import enrich
  from signal_log import update
-@@ -145,6 +146,12 @@ def run(do_publish: bool = False) -> dict[str, Any]:
+@@ -145,6 +146,13 @@ def run(do_publish: bool = False) -> dict[str, Any]:
          if frame is None:
              continue
          meta = metadata.get(sym, {})
-+        # Strength (0-100) per hitting strategy, via the shared rank.py engine
-+        # module. The same (symbol, strategy) gets the identical score in the
-+        # StrategyTerminal repo, so the screened list ranks the same in both.
++        # Strength (0-100) per hitting strategy, via rank.py. For the three
++        # screeners shared with StrategyTerminal (trending, gaining_momentum,
++        # meta_leader) the score is identical to that repo, so those three
++        # produce the same stocks in the same strength order in both apps.
 +        strat_strength = {st: rank.strength(st, r, frame) for st in strat_of[sym]}
 +        best_strat = max(strat_strength, key=strat_strength.get)
 +        strength_score = strat_strength[best_strat]
          stocks.append({
              "symbol": sym,
              "name": str(meta.get("name") or sym),
-@@ -159,11 +166,17 @@ def run(do_publish: bool = False) -> dict[str, Any]:
+@@ -159,11 +167,17 @@ def run(do_publish: bool = False) -> dict[str, Any]:
              "vol_ratio": _num(r.get("vol_ratio"), 2),
              "roc10": _num(r.get("roc10"), 2),
              "change_pct": _change_pct(frame),
@@ -1378,7 +1380,7 @@ index 5a31d21..f1abe7a 100644
  
      history = {s["symbol"]: _series(by_code[s["symbol"]], DETAIL_BARS) for s in stocks}
      now = datetime.now(timezone.utc)
-@@ -172,6 +185,7 @@ def run(do_publish: bool = False) -> dict[str, Any]:
+@@ -172,6 +186,7 @@ def run(do_publish: bool = False) -> dict[str, Any]:
          "engine": "BursaMusangKing Absolute-TA (restored)", "version": "old-restore-1.0",
          "market": config.MARKET, "market_name": config.MARKET_NAME, "currency": config.CURRENCY,
          "stocks_screened": len(prices), "total_hits": len(stocks), "new_hits": new_count,
@@ -1388,25 +1390,28 @@ index 5a31d21..f1abe7a 100644
          "stocks": stocks,
 diff --git a/rank.py b/rank.py
 new file mode 100644
-index 0000000..e9ed28f
+index 0000000..d9d2721
 --- /dev/null
 +++ b/rank.py
-@@ -0,0 +1,106 @@
+@@ -0,0 +1,109 @@
 +"""
-+Strength ranking layer (shared engine module).
++Strength ranking layer.
 +
-+The screening kernel produces *qualification* (which symbols pass each of the
-+six screeners) and the raw indicator values (rsi/adx/vol_ratio/roc10); it
-+explicitly leaves `score = None`. This module turns those raw values into a
-+0-100 strength score so any consumer can sort the screened list strongest-first.
++The screening engine produces *qualification* (which symbols pass each screener)
++and the raw indicator values (rsi/adx/vol_ratio/roc10); it explicitly leaves
++`score = None`. This module turns those raw values into a 0-100 strength score so
++the screened list can be sorted strongest-first.
 +
-+This file is part of the shared engine: watermelon owns the source copy and
-+StrategyTerminal vendors it verbatim into kernel/ (pinned by SOURCE_SHA), exactly
-+like screener.py / config.py / indicators.py. Keeping it shared guarantees both
-+repos assign the IDENTICAL strength score to the same (symbol, strategy), so the
-+screened list ranks the same in both apps. Edit it here in watermelon and re-pin.
++The three screeners that watermelon shares with the StrategyTerminal repo -
++trending, gaining_momentum (Momentum) and meta_leader (M.E.T.A.) - use formulas
++byte-for-byte identical to StrategyTerminal/rank.py, so those three produce the
++SAME stocks AND the SAME strength ranking in both apps. The other three
++(early_uptrend, reversal, base_breakout) are watermelon-only and are scored here
++so watermelon can rank its full six-screener list; they intentionally do not
++exist in StrategyTerminal. Keep the three shared formulas in sync across both
++files.
 +
-+Formula (accepted 2026-08; extended to all six screeners 2026-08):
++Formula (three shared with StrategyTerminal + three watermelon-only):
 +
 +    trending         : 0.45*ADX_n + 0.30*RSI_n  + 0.25*VOL_n
 +    early_uptrend    : 0.35*VOL_n + 0.30*RSI_n   + 0.20*ROC_n + 0.15*ADX_n
@@ -1418,9 +1423,8 @@ index 0000000..e9ed28f
 +Each *_n is a bounded 0-100 scaler (see SCALERS). The weights follow each
 +screener's economic intent: fresh trends and breakouts lead on volume
 +confirmation, reversals lead on the momentum flip (ROC/RSI), established trends
-+and leaders lead on ADX. Every one of the six screeners has a dedicated score,
-+so the whole screened list can be ranked strongest-first. Tune the anchor points
-+here; nothing else in either pipeline needs to change.
++and leaders lead on ADX. Tune the anchor points here; if you change any of the
++three SHARED formulas, make the identical change in StrategyTerminal/rank.py.
 +
 +NOTE: these numbers are the engine's own definition. They will NOT reproduce the
 +exact "Strength" values from the previous workers.dev build, whose formula was
@@ -1435,8 +1439,9 @@ index 0000000..e9ed28f
 +import pandas as pd
 +
 +
-+# Bump when the formula or scalers change, so both repos stamp the same model.
-+MODEL = "strength-v1.1.0"
++# Matches the strength model StrategyTerminal stamps, so the three shared
++# screeners report the same model as well as the same scores.
++MODEL = "strength-v1.0.0"
 +
 +
 +# ---- bounded linear scalers: value <= lo -> 0, value >= hi -> 100 ----------
