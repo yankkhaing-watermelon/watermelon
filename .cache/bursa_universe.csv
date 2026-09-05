@@ -359,7 +359,6 @@ MAGMA.KL,MAGMA,MYX:MAGMA,MYX,MAGMA,MAGMA.KL,Magma Group Bhd,Finance,stock,common
 OHM.KL,OHM,MYX:OHM,MYX,OHM,OHM.KL,Oasis Home Holding Bhd,Technology Services,stock,common,MYX
 MERSEC.KL,MERSEC,MYX:MERSEC,MYX,MERSEC,MERSEC.KL,Mercury Securities Group Bhd.,Finance,stock,common,MYX
 WENTEL.KL,WENTEL,MYX:WENTEL,MYX,WENTEL,WENTEL.KL,Wentel Engineering Holdings Bhd.,Producer Manufacturing,stock,common,MYX
-P&O.KL,P&O,MYX:P&O,MYX,P&O,P&O.KL,Pacific & Orient Bhd.,Finance,stock,common,MYX
 SUCCESS.KL,SUCCESS,MYX:SUCCESS,MYX,SUCCESS,SUCCESS.KL,Success Transformer Corp. Bhd.,Producer Manufacturing,stock,common,MYX
 PMW.KL,PMW,MYX:PMW,MYX,PMW,PMW.KL,PMW International Bhd.,Non-Energy Minerals,stock,common,MYX
 ALAM.KL,ALAM,MYX:ALAM,MYX,ALAM,ALAM.KL,Alam Maritim Resources Bhd.,Industrial Services,stock,common,MYX
@@ -434,7 +433,6 @@ TAGHILL.KL,TAGHILL,MYX:TAGHILL,MYX,TAGHILL,TAGHILL.KL,Taghill Holdings Bhd,Indus
 GADANG.KL,GADANG,MYX:GADANG,MYX,GADANG,GADANG.KL,Gadang Holdings Bhd.,Industrial Services,stock,common,MYX
 PARAGON.KL,PARAGON,MYX:PARAGON,MYX,PARAGON,PARAGON.KL,Paragon Union Bhd.,Producer Manufacturing,stock,common,MYX
 TRC.KL,TRC,MYX:TRC,MYX,TRC,TRC.KL,TRC Synergy Bhd.,Industrial Services,stock,common,MYX
-SALCON.KL,SALCON,MYX:SALCON,MYX,SALCON,SALCON.KL,Salcon Bhd.,Distribution Services,stock,common,MYX
 GDEX.KL,GDEX,MYX:GDEX,MYX,GDEX,GDEX.KL,GDEX Bhd,Transportation,stock,common,MYX
 LEFORM.KL,LEFORM,MYX:LEFORM,MYX,LEFORM,LEFORM.KL,Leform Bhd,Non-Energy Minerals,stock,common,MYX
 HEXIND.KL,HEXIND,MYX:HEXIND,MYX,HEXIND,HEXIND.KL,Hextar Industries Bhd,Producer Manufacturing,stock,common,MYX
@@ -513,7 +511,6 @@ MBRIGHT.KL,MBRIGHT,MYX:MBRIGHT,MYX,MBRIGHT,MBRIGHT.KL,Meta Bright Group Bhd,Cons
 TXCD.KL,TXCD,MYX:TXCD,MYX,TXCD,TXCD.KL,Txcd Bhd,Industrial Services,stock,common,MYX
 FIMACOR.KL,FIMACOR,MYX:FIMACOR,MYX,FIMACOR,FIMACOR.KL,Fima Corp. Bhd.,Process Industries,stock,common,MYX
 NESTCON.KL,NESTCON,MYX:NESTCON,MYX,NESTCON,NESTCON.KL,Nestcon Bhd,Consumer Durables,stock,common,MYX
-NHFATT.KL,NHFATT,MYX:NHFATT,MYX,NHFATT,NHFATT.KL,New Hoong Fatt Holdings Bhd.,Producer Manufacturing,stock,common,MYX
 CEPCO.KL,CEPCO,MYX:CEPCO,MYX,CEPCO,CEPCO.KL,Concrete Engineering Products Bhd.,Non-Energy Minerals,stock,common,MYX
 MIECO.KL,MIECO,MYX:MIECO,MYX,MIECO,MIECO.KL,Mieco Berhad,Non-Energy Minerals,stock,common,MYX
 IRIS.KL,IRIS,MYX:IRIS,MYX,IRIS,IRIS.KL,IRIS Corp. Bhd.,Electronic Technology,stock,common,MYX
@@ -531,7 +528,6 @@ ADNEX.KL,ADNEX,MYX:ADNEX,MYX,ADNEX,ADNEX.KL,Adnex Group Berhad,Commercial Servic
 TUNEPRO.KL,TUNEPRO,MYX:TUNEPRO,MYX,TUNEPRO,TUNEPRO.KL,Tune Protect Group Bhd.,Finance,stock,common,MYX
 LIFTECH.KL,LIFTECH,MYX:LIFTECH,MYX,LIFTECH,LIFTECH.KL,Liftech Group Berhad,Producer Manufacturing,stock,common,MYX
 UMC.KL,UMC,MYX:UMC,MYX,UMC,UMC.KL,UMediC Group Bhd.,Health Technology,stock,common,MYX
-HEXTECH.KL,HEXTECH,MYX:HEXTECH,MYX,HEXTECH,HEXTECH.KL,Hextar Technologies Solutions Berhad.,Distribution Services,stock,common,MYX
 YGL.KL,YGL,MYX:YGL,MYX,YGL,YGL.KL,YGL Convergence Bhd.,Technology Services,stock,common,MYX
 HEKTAR.KL,HEKTAR,MYX:HEKTAR,MYX,HEKTAR,HEKTAR.KL,Hektar Real Estate Investment Trust,Finance,stock,common,MYX
 M&A.KL,M&A,MYX:M&A,MYX,M&A,M&A.KL,M & A Equity Holdings Bhd,Finance,stock,common,MYX
@@ -549,8 +545,6 @@ SYGROUP.KL,SYGROUP,MYX:SYGROUP,MYX,SYGROUP,SYGROUP.KL,Shin Yang Group Bhd,Transp
 A1AKK.KL,A1AKK,MYX:A1AKK,MYX,A1AKK,A1AKK.KL,A1 A.K. Koh Group Bhd.,Distribution Services,stock,common,MYX
 TECHBND.KL,TECHBND,MYX:TECHBND,MYX,TECHBND,TECHBND.KL,Techbond Group Bhd.,Process Industries,stock,common,MYX
 MASTEEL.KL,MASTEEL,MYX:MASTEEL,MYX,MASTEEL,MASTEEL.KL,Malaysia Steel Works (KL) Bhd.,Non-Energy Minerals,stock,common,MYX
-MERCURY.KL,MERCURY,MYX:MERCURY,MYX,MERCURY,MERCURY.KL,Mercury Industries Bhd,Industrial Services,stock,common,MYX
-CHINWEL.KL,CHINWEL,MYX:CHINWEL,MYX,CHINWEL,CHINWEL.KL,Chin Well Holdings Bhd.,Producer Manufacturing,stock,common,MYX
 PRKCORP.KL,PRKCORP,MYX:PRKCORP,MYX,PRKCORP,PRKCORP.KL,Perak Corp. Bhd.,Transportation,stock,common,MYX
 POS.KL,POS,MYX:POS,MYX,POS,POS.KL,Pos Malaysia Bhd.,Transportation,stock,common,MYX
 RVIEW.KL,RVIEW,MYX:RVIEW,MYX,RVIEW,RVIEW.KL,Riverview Rubber Estates Bhd.,Process Industries,stock,common,MYX
@@ -597,7 +591,6 @@ LIONIND.KL,LIONIND,MYX:LIONIND,MYX,LIONIND,LIONIND.KL,Lion Industries Corp. Bhd.
 BINACOM.KL,BINACOM,MYX:BINACOM,MYX,BINACOM,BINACOM.KL,Binasat Communications Bhd.,Communications,stock,common,MYX
 CHOOBEE.KL,CHOOBEE,MYX:CHOOBEE,MYX,CHOOBEE,CHOOBEE.KL,Choo Bee Metal Industries Bhd.,Non-Energy Minerals,stock,common,MYX
 REVENUE.KL,REVENUE,MYX:REVENUE,MYX,REVENUE,REVENUE.KL,Revenue Group Bhd.,Electronic Technology,stock,common,MYX
-CHGP.KL,CHGP,MYX:CHGP,MYX,CHGP,CHGP.KL,Chin Hin Group Property Bhd.,Consumer Durables,stock,common,MYX
 DNONCE.KL,DNONCE,MYX:DNONCE,MYX,DNONCE,DNONCE.KL,D'nonce Technology Bhd.,Electronic Technology,stock,common,MYX
 KPPROP.KL,KPPROP,MYX:KPPROP,MYX,KPPROP,KPPROP.KL,Kerjaya Prospek Property Bhd.,Finance,stock,common,MYX
 AVALAND.KL,AVALAND,MYX:AVALAND,MYX,AVALAND,AVALAND.KL,AVALAND Bhd,Finance,stock,common,MYX
@@ -611,12 +604,10 @@ HOCKSOON.KL,HOCKSOON,MYX:HOCKSOON,MYX,HOCKSOON,HOCKSOON.KL,Hock Soon Capital Bhd
 AWANTEC.KL,AWANTEC,MYX:AWANTEC,MYX,AWANTEC,AWANTEC.KL,AwanBiru Technology Bhd.,Technology Services,stock,common,MYX
 JIANKUN.KL,JIANKUN,MYX:JIANKUN,MYX,JIANKUN,JIANKUN.KL,Jiankun International Bhd,Process Industries,stock,common,MYX
 COMFORT.KL,COMFORT,MYX:COMFORT,MYX,COMFORT,COMFORT.KL,Comfort Gloves Bhd.,Producer Manufacturing,stock,common,MYX
-SYCAL.KL,SYCAL,MYX:SYCAL,MYX,SYCAL,SYCAL.KL,Sycal Ventures Berhad,Non-Energy Minerals,stock,common,MYX
 EPICON.KL,EPICON,MYX:EPICON,MYX,EPICON,EPICON.KL,Epicon Bhd,Consumer Services,stock,common,MYX
 APOLLO.KL,APOLLO,MYX:APOLLO,MYX,APOLLO,APOLLO.KL,Apollo Food Holdings Bhd.,Consumer Non-Durables,stock,common,MYX
 RESTNGO.KL,RESTNGO,MYX:RESTNGO,MYX,RESTNGO,RESTNGO.KL,RNG Tech Berhad,Consumer Services,stock,common,MYX
 KHB.KL,KHB,MYX:KHB,MYX,KHB,KHB.KL,KHPT Holdings Bhd,Producer Manufacturing,stock,common,MYX
-BRIGHT.KL,BRIGHT,MYX:BRIGHT,MYX,BRIGHT,BRIGHT.KL,Bright Packaging Industry Bhd.,Process Industries,stock,common,MYX
 LYSAGHT.KL,LYSAGHT,MYX:LYSAGHT,MYX,LYSAGHT,LYSAGHT.KL,Lysaght Galvanized Steel Bhd.,Non-Energy Minerals,stock,common,MYX
 TDEX.KL,TDEX,MYX:TDEX,MYX,TDEX,TDEX.KL,Technodex Bhd.,Commercial Services,stock,common,MYX
 ABLEGRP.KL,ABLEGRP,MYX:ABLEGRP,MYX,ABLEGRP,ABLEGRP.KL,AbleGroup Bhd.,Non-Energy Minerals,stock,common,MYX
@@ -633,12 +624,10 @@ HEVEA.KL,HEVEA,MYX:HEVEA,MYX,HEVEA,HEVEA.KL,HeveaBoard Bhd.,Producer Manufacturi
 INNATURE.KL,INNATURE,MYX:INNATURE,MYX,INNATURE,INNATURE.KL,Innature bhd,Retail Trade,stock,common,MYX
 HWGB.KL,HWGB,MYX:HWGB,MYX,HWGB,HWGB.KL,Ho Wah Genting Bhd.,Producer Manufacturing,stock,common,MYX
 PDZ.KL,PDZ,MYX:PDZ,MYX,PDZ,PDZ.KL,PDZ Holdings Bhd.,Transportation,stock,common,MYX
-GPHAROS.KL,GPHAROS,MYX:GPHAROS,MYX,GPHAROS,GPHAROS.KL,Golden Pharos Bhd.,Producer Manufacturing,stock,common,MYX
 TCHONG.KL,TCHONG,MYX:TCHONG,MYX,TCHONG,TCHONG.KL,Tan Chong Motor Holdings Bhd.,Consumer Durables,stock,common,MYX
 ADB.KL,ADB,MYX:ADB,MYX,ADB,ADB.KL,Autocount Dotcom Bhd,Technology Services,stock,common,MYX
 BLDPLNT.KL,BLDPLNT,MYX:BLDPLNT,MYX,BLDPLNT,BLDPLNT.KL,BLD Plantation Bhd.,Process Industries,stock,common,MYX
 RSAWIT.KL,RSAWIT,MYX:RSAWIT,MYX,RSAWIT,RSAWIT.KL,Rimbunan Sawit Bhd.,Process Industries,stock,common,MYX
-IMASPRO.KL,IMASPRO,MYX:IMASPRO,MYX,IMASPRO,IMASPRO.KL,Imaspro Corp. Bhd.,Process Industries,stock,common,MYX
 EPB.KL,EPB,MYX:EPB,MYX,EPB,EPB.KL,EPB Group Berhad,Producer Manufacturing,stock,common,MYX
 JAGCPTL.KL,JAGCPTL,MYX:JAGCPTL,MYX,JAGCPTL,JAGCPTL.KL,Jag Capital Berhad,Commercial Services,stock,common,MYX
 CENGILD.KL,CENGILD,MYX:CENGILD,MYX,CENGILD,CENGILD.KL,Cengild Medical Bhd.,Health Services,stock,common,MYX
@@ -652,7 +641,6 @@ EWICAP.KL,EWICAP,MYX:EWICAP,MYX,EWICAP,EWICAP.KL,EWI Capital Bhd,Finance,stock,c
 TOMYPAK.KL,TOMYPAK,MYX:TOMYPAK,MYX,TOMYPAK,TOMYPAK.KL,Tomypak Holdings Bhd.,Process Industries,stock,common,MYX
 FIBRO.KL,FIBRO,MYX:FIBRO,MYX,FIBRO,FIBRO.KL,Fibromat (M) Bhd.,Process Industries,stock,common,MYX
 CAREPLS.KL,CAREPLS,MYX:CAREPLS,MYX,CAREPLS,CAREPLS.KL,Careplus Group Bhd.,Producer Manufacturing,stock,common,MYX
-BIPORT.KL,BIPORT,MYX:BIPORT,MYX,BIPORT,BIPORT.KL,Bintulu Port Holdings Bhd.,Transportation,stock,common,MYX
 UCREST.KL,UCREST,MYX:UCREST,MYX,UCREST,UCREST.KL,UCrest Bhd,Technology Services,stock,common,MYX
 VSOLAR.KL,VSOLAR,MYX:VSOLAR,MYX,VSOLAR,VSOLAR.KL,Vsolar Group Bhd.,Technology Services,stock,common,MYX
 UNIMECH.KL,UNIMECH,MYX:UNIMECH,MYX,UNIMECH,UNIMECH.KL,Unimech Group Bhd.,Producer Manufacturing,stock,common,MYX
@@ -680,7 +668,6 @@ MENTIGA.KL,MENTIGA,MYX:MENTIGA,MYX,MENTIGA,MENTIGA.KL,Mentiga Corp. Bhd.,Process
 PLINTAS.KL,PLINTAS,MYX:PLINTAS,MYX,PLINTAS,PLINTAS.KL,Prolintas Infra Business Trust,Industrial Services,stock,common,MYX
 TEKSENG.KL,TEKSENG,MYX:TEKSENG,MYX,TEKSENG,TEKSENG.KL,Tek Seng Holdings Bhd.,Process Industries,stock,common,MYX
 GENERGY.KL,GENERGY,MYX:GENERGY,MYX,GENERGY,GENERGY.KL,Wasco Greenergy Berhad,Miscellaneous,stock,common,MYX
-FAST.KL,FAST,MYX:FAST,MYX,FAST,FAST.KL,Fast Energy Holdings Bhd,Transportation,stock,common,MYX
 OBHB.KL,OBHB,MYX:OBHB,MYX,OBHB,OBHB.KL,OB Holdings Bhd,Commercial Services,stock,common,MYX
 STRAITS.KL,STRAITS,MYX:STRAITS,MYX,STRAITS,STRAITS.KL,Straits Energy Resources Bhd,Distribution Services,stock,common,MYX
 EUPE.KL,EUPE,MYX:EUPE,MYX,EUPE,EUPE.KL,EUPE Corp. Bhd.,Finance,stock,common,MYX
@@ -704,7 +691,6 @@ AIMAX.KL,AIMAX,MYX:AIMAX,MYX,AIMAX,AIMAX.KL,AIMAX Berhad,Distribution Services,s
 PENSONI.KL,PENSONI,MYX:PENSONI,MYX,PENSONI,PENSONI.KL,Pensonic Holdings Bhd.,Consumer Durables,stock,common,MYX
 OKA.KL,OKA,MYX:OKA,MYX,OKA,OKA.KL,OKA Corporation Bhd.,Non-Energy Minerals,stock,common,MYX
 BKAWAN.KL,BKAWAN,MYX:BKAWAN,MYX,BKAWAN,BKAWAN.KL,Batu Kawan Bhd.,Process Industries,stock,common,MYX
-OMAI.KL,OMAI,MYX:OMAI,MYX,OMAI,OMAI.KL,Openmove AI Berhad,Technology Services,stock,common,MYX
 MIDTOWN.KL,MIDTOWN,MYX:MIDTOWN,MYX,MIDTOWN,MIDTOWN.KL,Midtown Group Berhad,Producer Manufacturing,stock,common,MYX
 HM.KL,HM,MYX:HM,MYX,HM,HM.KL,Harvest Miracle Capital Bhd,Technology Services,stock,common,MYX
 MULPHA.KL,MULPHA,MYX:MULPHA,MYX,MULPHA,MULPHA.KL,Mulpha International Bhd.,Consumer Services,stock,common,MYX
@@ -713,17 +699,13 @@ CANONE.KL,CANONE,MYX:CANONE,MYX,CANONE,CANONE.KL,Can-One Bhd.,Process Industries
 AMEREIT.KL,AMEREIT,MYX:AMEREIT,MYX,AMEREIT,AMEREIT.KL,AME Real Estate Investment Trust,Finance,stock,common,MYX
 MMAG.KL,MMAG,MYX:MMAG,MYX,MMAG,MMAG.KL,MMAG Holdings Bhd.,Technology Services,stock,common,MYX
 BONIA.KL,BONIA,MYX:BONIA,MYX,BONIA,BONIA.KL,Bonia Corp. Bhd.,Retail Trade,stock,common,MYX
-TGL.KL,TGL,MYX:TGL,MYX,TGL,TGL.KL,Teo Guan Lee Corp. Bhd.,Consumer Non-Durables,stock,common,MYX
-AGRICOR.KL,AGRICOR,MYX:AGRICOR,MYX,AGRICOR,AGRICOR.KL,Agricore CS Holdings Bhd,Distribution Services,stock,common,MYX
 ERDASAN.KL,ERDASAN,MYX:ERDASAN,MYX,ERDASAN,ERDASAN.KL,Erdasan Group Bhd,Producer Manufacturing,stock,common,MYX
 HARNLEN.KL,HARNLEN,MYX:HARNLEN,MYX,HARNLEN,HARNLEN.KL,Harn Len Corporation Bhd.,Consumer Durables,stock,common,MYX
 ANEKA.KL,ANEKA,MYX:ANEKA,MYX,ANEKA,ANEKA.KL,Aneka Jaringan Holdings Bhd,Industrial Services,stock,common,MYX
 PLABS.KL,PLABS,MYX:PLABS,MYX,PLABS,PLABS.KL,PeterLabs Holdings Bhd.,Process Industries,stock,common,MYX
 TAS.KL,TAS,MYX:TAS,MYX,TAS,TAS.KL,TAS Offshore Bhd.,Producer Manufacturing,stock,common,MYX
-IQGROUP.KL,IQGROUP,MYX:IQGROUP,MYX,IQGROUP,IQGROUP.KL,IQ Group Holdings Bhd.,Electronic Technology,stock,common,MYX
 ANCOMLB.KL,ANCOMLB,MYX:ANCOMLB,MYX,ANCOMLB,ANCOMLB.KL,Ancom Logistics Bhd.,Transportation,stock,common,MYX
 CJCEN.KL,CJCEN,MYX:CJCEN,MYX,CJCEN,CJCEN.KL,CJ Century Logistics Holdings Bhd.,Transportation,stock,common,MYX
-AMTEL.KL,AMTEL,MYX:AMTEL,MYX,AMTEL,AMTEL.KL,Amtel Holdings Bhd.,Technology Services,stock,common,MYX
 PGF.KL,PGF,MYX:PGF,MYX,PGF,PGF.KL,PGF Capital Bhd,Non-Energy Minerals,stock,common,MYX
 VERDANT.KL,VERDANT,MYX:VERDANT,MYX,VERDANT,VERDANT.KL,Verdant Solar Holdings Bhd.,Industrial Services,stock,common,MYX
 WANGZNG.KL,WANGZNG,MYX:WANGZNG,MYX,WANGZNG,WANGZNG.KL,Wang-Zheng Bhd.,Process Industries,stock,common,MYX
@@ -739,7 +721,6 @@ FITTERS.KL,FITTERS,MYX:FITTERS,MYX,FITTERS,FITTERS.KL,Fitters Diversified Bhd.,P
 NOVATECH.KL,NOVATECH,MYX:NOVATECH,MYX,NOVATECH,NOVATECH.KL,NOVA Technology services berhad,Technology Services,stock,common,MYX
 GUH.KL,GUH,MYX:GUH,MYX,GUH,GUH.KL,GUH Holdings Bhd.,Consumer Durables,stock,common,MYX
 KPSCB.KL,KPSCB,MYX:KPSCB,MYX,KPSCB,KPSCB.KL,KPS Consortium Bhd.,Distribution Services,stock,common,MYX
-FCW.KL,FCW,MYX:FCW,MYX,FCW,FCW.KL,FCW Holdings Bhd.,Consumer Non-Durables,stock,common,MYX
 VERSATL.KL,VERSATL,MYX:VERSATL,MYX,VERSATL,VERSATL.KL,Versatile Creative Bhd.,Process Industries,stock,common,MYX
 HUBLINE.KL,HUBLINE,MYX:HUBLINE,MYX,HUBLINE,HUBLINE.KL,Hubline Bhd.,Transportation,stock,common,MYX
 PERSTIM.KL,PERSTIM,MYX:PERSTIM,MYX,PERSTIM,PERSTIM.KL,Perusahaan Sadur Timah Malaysia (Perstima) Bhd.,Non-Energy Minerals,stock,common,MYX
@@ -768,13 +749,9 @@ SUNSURIA.KL,SUNSURIA,MYX:SUNSURIA,MYX,SUNSURIA,SUNSURIA.KL,Sunsuria Berhad,Finan
 MGB.KL,MGB,MYX:MGB,MYX,MGB,MGB.KL,MGB Bhd,Consumer Durables,stock,common,MYX
 KAWAN.KL,KAWAN,MYX:KAWAN,MYX,KAWAN,KAWAN.KL,Kawan Food Bhd.,Consumer Non-Durables,stock,common,MYX
 MQTECH.KL,MQTECH,MYX:MQTECH,MYX,MQTECH,MQTECH.KL,MQ Technology Bhd.,Producer Manufacturing,stock,common,MYX
-TEXCYCL.KL,TEXCYCL,MYX:TEXCYCL,MYX,TEXCYCL,TEXCYCL.KL,Tex Cycle Technology (M) Bhd.,Industrial Services,stock,common,MYX
-GREENTEC.KL,GREENTEC,MYX:GREENTEC,MYX,GREENTEC,GREENTEC.KL,Greentronics Technology Berhad,Industrial Services,stock,common,MYX
 GLOTEC.KL,GLOTEC,MYX:GLOTEC,MYX,GLOTEC,GLOTEC.KL,Globaltec Formation Bhd.,Producer Manufacturing,stock,common,MYX
-SAB.KL,SAB,MYX:SAB,MYX,SAB,SAB.KL,Southern Acids (Malaysia) Bhd.,Miscellaneous,stock,common,MYX
 YSPSAH.KL,YSPSAH,MYX:YSPSAH,MYX,YSPSAH,YSPSAH.KL,Y.S.P. Southeast Asia Holding Bhd.,Health Technology,stock,common,MYX
 AJIYA.KL,AJIYA,MYX:AJIYA,MYX,AJIYA,AJIYA.KL,Ajiya Bhd.,Distribution Services,stock,common,MYX
-EKSONS.KL,EKSONS,MYX:EKSONS,MYX,EKSONS,EKSONS.KL,Eksons Corp. Bhd.,Finance,stock,common,MYX
 MASTER.KL,MASTER,MYX:MASTER,MYX,MASTER,MASTER.KL,Master-Pack Group Bhd.,Process Industries,stock,common,MYX
 APM.KL,APM,MYX:APM,MYX,APM,APM.KL,APM Automotive Holdings Bhd.,Producer Manufacturing,stock,common,MYX
 SOLID.KL,SOLID,MYX:SOLID,MYX,SOLID,SOLID.KL,Solid Automotive Bhd.,Distribution Services,stock,common,MYX
@@ -839,13 +816,9 @@ GOB.KL,GOB,MYX:GOB,MYX,GOB,GOB.KL,Global Oriental Bhd.,Finance,stock,common,MYX
 ASIAPAC.KL,ASIAPAC,MYX:ASIAPAC,MYX,ASIAPAC,ASIAPAC.KL,Asian Pac Holdings Bhd.,Finance,stock,common,MYX
 SPRING.KL,SPRING,MYX:SPRING,MYX,SPRING,SPRING.KL,Spring Art Holdings Bhd,Consumer Durables,stock,common,MYX
 MENANG.KL,MENANG,MYX:MENANG,MYX,MENANG,MENANG.KL,Menang Corporation (M) Berhad,Industrial Services,stock,common,MYX
-MUH.KL,MUH,MYX:MUH,MYX,MUH,MUH.KL,Multi-Usage Holdings Bhd.,Finance,stock,common,MYX
 GLBHD.KL,GLBHD,MYX:GLBHD,MYX,GLBHD,GLBHD.KL,Golden Land Bhd.,Finance,stock,common,MYX
 HPMT.KL,HPMT,MYX:HPMT,MYX,HPMT,HPMT.KL,HPMT Holdings Bhd.,Producer Manufacturing,stock,common,MYX
-FIBON.KL,FIBON,MYX:FIBON,MYX,FIBON,FIBON.KL,Fibon Bhd.,Process Industries,stock,common,MYX
-ECEXCEL.KL,ECEXCEL,MYX:ECEXCEL,MYX,ECEXCEL,ECEXCEL.KL,EC Excel Holdings Berhad,Non-Energy Minerals,stock,common,MYX
 TNLOGIS.KL,TNLOGIS,MYX:TNLOGIS,MYX,TNLOGIS,TNLOGIS.KL,Tiong Nam Logistics Holdings Bhd.,Transportation,stock,common,MYX
-SMISCOR.KL,SMISCOR,MYX:SMISCOR,MYX,SMISCOR,SMISCOR.KL,SMIS Corp. Bhd.,Producer Manufacturing,stock,common,MYX
 DSS.KL,DSS,MYX:DSS,MYX,DSS,DSS.KL,DS Sigma Holdings Berhad,Process Industries,stock,common,MYX
 JADI.KL,JADI,MYX:JADI,MYX,JADI,JADI.KL,Jadi Imaging Holdings Bhd.,Process Industries,stock,common,MYX
 PUC.KL,PUC,MYX:PUC,MYX,PUC,PUC.KL,PUC Bhd,Commercial Services,stock,common,MYX
@@ -853,7 +826,6 @@ INSPACE.KL,INSPACE,MYX:INSPACE,MYX,INSPACE,INSPACE.KL,Inspace Creation Berhad,Co
 LUSTER.KL,LUSTER,MYX:LUSTER,MYX,LUSTER,LUSTER.KL,Luster Industries Bhd.,Producer Manufacturing,stock,common,MYX
 MEDIA.KL,MEDIA,MYX:MEDIA,MYX,MEDIA,MEDIA.KL,Media Prima Bhd.,Consumer Services,stock,common,MYX
 OLYMPIA.KL,OLYMPIA,MYX:OLYMPIA,MYX,OLYMPIA,OLYMPIA.KL,Olympia Industries Bhd.,Consumer Services,stock,common,MYX
-MJPERAK.KL,MJPERAK,MYX:MJPERAK,MYX,MJPERAK,MJPERAK.KL,Majuperak Holdings Bhd.,Finance,stock,common,MYX
 MTRONIC.KL,MTRONIC,MYX:MTRONIC,MYX,MTRONIC,MTRONIC.KL,Metronic Global Bhd.,Technology Services,stock,common,MYX
 FINTEC.KL,FINTEC,MYX:FINTEC,MYX,FINTEC,FINTEC.KL,Fintec Global Bhd,Commercial Services,stock,common,MYX
 KNUSFOR.KL,KNUSFOR,MYX:KNUSFOR,MYX,KNUSFOR,KNUSFOR.KL,Knusford Bhd.,Industrial Services,stock,common,MYX
@@ -870,24 +842,16 @@ DIGISTA.KL,DIGISTA,MYX:DIGISTA,MYX,DIGISTA,DIGISTA.KL,Digistar Corp. Bhd.,Indust
 SHCHAN.KL,SHCHAN,MYX:SHCHAN,MYX,SHCHAN,SHCHAN.KL,Sin Heng Chan (Malaya) Bhd.,Process Industries,stock,common,MYX
 RKI.KL,RKI,MYX:RKI,MYX,RKI,RKI.KL,Rhong Khen International Bhd,Consumer Durables,stock,common,MYX
 LIENHOE.KL,LIENHOE,MYX:LIENHOE,MYX,LIENHOE,LIENHOE.KL,Lien Hoe Corp. Bhd.,Consumer Services,stock,common,MYX
-MAXIM.KL,MAXIM,MYX:MAXIM,MYX,MAXIM,MAXIM.KL,Maxim Global Bhd.,Non-Energy Minerals,stock,common,MYX
 ALCOM.KL,ALCOM,MYX:ALCOM,MYX,ALCOM,ALCOM.KL,Alcom Group Bhd.,Non-Energy Minerals,stock,common,MYX
 ROHAS.KL,ROHAS,MYX:ROHAS,MYX,ROHAS,ROHAS.KL,Rohas Tecnic Bhd.,Producer Manufacturing,stock,common,MYX
-METROD.KL,METROD,MYX:METROD,MYX,METROD,METROD.KL,Metrod Holdings Bhd.,Producer Manufacturing,stock,common,MYX
-FARLIM.KL,FARLIM,MYX:FARLIM,MYX,FARLIM,FARLIM.KL,Farlim Group (Malaysia) Bhd.,Finance,stock,common,MYX
-SCB.KL,SCB,MYX:SCB,MYX,SCB,SCB.KL,Sik Cheong Berhad,Commercial Services,stock,common,MYX
-HHHCORP.KL,HHHCORP,MYX:HHHCORP,MYX,HHHCORP,HHHCORP.KL,Hiap Huat Holdings Bhd.,Energy Minerals,stock,common,MYX
 NETX.KL,NETX,MYX:NETX,MYX,NETX,NETX.KL,NetX Holdings Bhd.,Technology Services,stock,common,MYX
 LAND33.KL,LAND33,MYX:LAND33,MYX,LAND33,LAND33.KL,Land 33 Berhad,Finance,stock,common,MYX
 TIENWAH.KL,TIENWAH,MYX:TIENWAH,MYX,TIENWAH,TIENWAH.KL,Tien Wah Press Holdings Bhd.,Commercial Services,stock,common,MYX
-FLEXI.KL,FLEXI,MYX:FLEXI,MYX,FLEXI,FLEXI.KL,Flexidynamic Holdings Bhd,Producer Manufacturing,stock,common,MYX
 PEOPLE.KL,PEOPLE,MYX:PEOPLE,MYX,PEOPLE,PEOPLE.KL,PEOPLElogy Bhd,Technology Services,stock,common,MYX
-MYTECH.KL,MYTECH,MYX:MYTECH,MYX,MYTECH,MYTECH.KL,MyTech Group Berhad,Producer Manufacturing,stock,common,MYX
 BTECH.KL,BTECH,MYX:BTECH,MYX,BTECH,BTECH.KL,Brite-Tech Bhd.,Industrial Services,stock,common,MYX
 ATLAN.KL,ATLAN,MYX:ATLAN,MYX,ATLAN,ATLAN.KL,Atlan Holdings Bhd.,Commercial Services,stock,common,MYX
 SDRED.KL,SDRED,MYX:SDRED,MYX,SDRED,SDRED.KL,Selangor Dredging Bhd.,Finance,stock,common,MYX
 ASM.KL,ASM,MYX:ASM,MYX,ASM,ASM.KL,ASM Automation Group Berhad,Producer Manufacturing,stock,common,MYX
-LEESK.KL,LEESK,MYX:LEESK,MYX,LEESK,LEESK.KL,Lee Swee Kiat Group Bhd.,Non-Energy Minerals,stock,common,MYX
 MNC.KL,MNC,MYX:MNC,MYX,MNC,MNC.KL,MNC Wireless Bhd.,Communications,stock,common,MYX
 BDB.KL,BDB,MYX:BDB,MYX,BDB,BDB.KL,Bina Darulaman Bhd.,Industrial Services,stock,common,MYX
 ALRICH.KL,ALRICH,MYX:ALRICH,MYX,ALRICH,ALRICH.KL,Aldrich Resources Bhd,Commercial Services,stock,common,MYX
@@ -896,30 +860,23 @@ FLBHD.KL,FLBHD,MYX:FLBHD,MYX,FLBHD,FLBHD.KL,Focus Lumber Bhd.,Producer Manufactu
 IGBCR.KL,IGBCR,MYX:IGBCR,MYX,IGBCR,IGBCR.KL,IGB Commercial Real Estate Investment Trust,Finance,stock,common,MYX
 YXPM.KL,YXPM,MYX:YXPM,MYX,YXPM,YXPM.KL,YX Precious Metals Bhd,Consumer Durables,stock,common,MYX
 LANDMRK.KL,LANDMRK,MYX:LANDMRK,MYX,LANDMRK,LANDMRK.KL,Landmarks Bhd.,Consumer Services,stock,common,MYX
-UMS.KL,UMS,MYX:UMS,MYX,UMS,UMS.KL,UMS Holdings Bhd.,Distribution Services,stock,common,MYX
 CATCHA.KL,CATCHA,MYX:CATCHA,MYX,CATCHA,CATCHA.KL,Catcha Digital Bhd,Commercial Services,stock,common,MYX
 FAMIERA.KL,FAMIERA,MYX:FAMIERA,MYX,FAMIERA,FAMIERA.KL,Farmiera Bhd.,Process Industries,stock,common,MYX
 TRIVE.KL,TRIVE,MYX:TRIVE,MYX,TRIVE,TRIVE.KL,Trive Property Group Bhd.,Electronic Technology,stock,common,MYX
 BOXPAK.KL,BOXPAK,MYX:BOXPAK,MYX,BOXPAK,BOXPAK.KL,Box-Pak (Malaysia) Bhd.,Process Industries,stock,common,MYX
-SINKUNG.KL,SINKUNG,MYX:SINKUNG,MYX,SINKUNG,SINKUNG.KL,Sin-Kung Logistics Bhd.,Transportation,stock,common,MYX
 KITACON.KL,KITACON,MYX:KITACON,MYX,KITACON,KITACON.KL,Kumpulan Kitacon Berhad,Consumer Durables,stock,common,MYX
 CHHB.KL,CHHB,MYX:CHHB,MYX,CHHB,CHHB.KL,Country Heights Holdings Bhd.,Finance,stock,common,MYX
 AEM.KL,AEM,MYX:AEM,MYX,AEM,AEM.KL,AE Multi Holdings Bhd.,Electronic Technology,stock,common,MYX
 DGB.KL,DGB,MYX:DGB,MYX,DGB,DGB.KL,DGB Asia Bhd,Consumer Services,stock,common,MYX
-VOLCANO.KL,VOLCANO,MYX:VOLCANO,MYX,VOLCANO,VOLCANO.KL,Volcano Bhd.,Producer Manufacturing,stock,common,MYX
 ENRA.KL,ENRA,MYX:ENRA,MYX,ENRA,ENRA.KL,ENRA Group Bhd.,Commercial Services,stock,common,MYX
 TOPMIX.KL,TOPMIX,MYX:TOPMIX,MYX,TOPMIX,TOPMIX.KL,Topmix Bhd,Producer Manufacturing,stock,common,MYX
 ADVCON.KL,ADVCON,MYX:ADVCON,MYX,ADVCON,ADVCON.KL,Advancecon Holdings Bhd.,Industrial Services,stock,common,MYX
 KKB.KL,KKB,MYX:KKB,MYX,KKB,KKB.KL,KKB Engineering Bhd.,Non-Energy Minerals,stock,common,MYX
 SYNERGY.KL,SYNERGY,MYX:SYNERGY,MYX,SYNERGY,SYNERGY.KL,Synergy House Bhd,Consumer Durables,stock,common,MYX
-KHIND.KL,KHIND,MYX:KHIND,MYX,KHIND,KHIND.KL,Khind Holdings Bhd.,Consumer Durables,stock,common,MYX
 KGROUP.KL,KGROUP,MYX:KGROUP,MYX,KGROUP,KGROUP.KL,Key Alliance Group Berhad,Consumer Durables,stock,common,MYX
 REKATECH.KL,REKATECH,MYX:REKATECH,MYX,REKATECH,REKATECH.KL,Rekatech Capital Bhd,Commercial Services,stock,common,MYX
 HOMERIZ.KL,HOMERIZ,MYX:HOMERIZ,MYX,HOMERIZ,HOMERIZ.KL,Homeritz Corp. Bhd.,Consumer Durables,stock,common,MYX
-JAYCORP.KL,JAYCORP,MYX:JAYCORP,MYX,JAYCORP,JAYCORP.KL,Jaycorp Berhad,Consumer Durables,stock,common,MYX
-TPC.KL,TPC,MYX:TPC,MYX,TPC,TPC.KL,TPC Plus Bhd.,Consumer Non-Durables,stock,common,MYX
 YONGTAI.KL,YONGTAI,MYX:YONGTAI,MYX,YONGTAI,YONGTAI.KL,Yong Tai Bhd.,Finance,stock,common,MYX
-IHB.KL,IHB,MYX:IHB,MYX,IHB,IHB.KL,Infraharta Holdings Bhd.,Consumer Durables,stock,common,MYX
 MUDA.KL,MUDA,MYX:MUDA,MYX,MUDA,MUDA.KL,Muda Holdings Bhd.,Process Industries,stock,common,MYX
 FM.KL,FM,MYX:FM,MYX,FM,FM.KL,FM Global Logistics Holdings Bhd,Transportation,stock,common,MYX
 VELOCITY.KL,VELOCITY,MYX:VELOCITY,MYX,VELOCITY,VELOCITY.KL,VELOCITY CAPITAL PARTNER Bhd,Producer Manufacturing,stock,common,MYX
@@ -940,7 +897,6 @@ WIDAD.KL,WIDAD,MYX:WIDAD,MYX,WIDAD,WIDAD.KL,Widad Group Bhd.,Consumer Services,s
 HOHUP.KL,HOHUP,MYX:HOHUP,MYX,HOHUP,HOHUP.KL,Ho Hup Construction Co. Bhd.,Finance,stock,common,MYX
 OVERSEA.KL,OVERSEA,MYX:OVERSEA,MYX,OVERSEA,OVERSEA.KL,Oversea Enterprise Bhd.,Consumer Services,stock,common,MYX
 SG.KL,SG,MYX:SG,MYX,SG,SG.KL,Saudigold Group Bhd,Consumer Non-Durables,stock,common,MYX
-KIALIM.KL,KIALIM,MYX:KIALIM,MYX,KIALIM,KIALIM.KL,Kia Lim Bhd.,Non-Energy Minerals,stock,common,MYX
 LOTUS.KL,LOTUS,MYX:LOTUS,MYX,LOTUS,LOTUS.KL,Lotus Kfm Bhd,Process Industries,stock,common,MYX
 ARKA.KL,ARKA,MYX:ARKA,MYX,ARKA,ARKA.KL,ARKA Bhd,Commercial Services,stock,common,MYX
 ZELAN.KL,ZELAN,MYX:ZELAN,MYX,ZELAN,ZELAN.KL,Zelan Bhd.,Industrial Services,stock,common,MYX
@@ -948,16 +904,13 @@ WTHORSE.KL,WTHORSE,MYX:WTHORSE,MYX,WTHORSE,WTHORSE.KL,White Horse Bhd.,Producer 
 SALIRAN.KL,SALIRAN,MYX:SALIRAN,MYX,SALIRAN,SALIRAN.KL,Saliran Group Bhd,Distribution Services,stock,common,MYX
 FIHB.KL,FIHB,MYX:FIHB,MYX,FIHB,FIHB.KL,Federal International Holdings Bhd.,Consumer Durables,stock,common,MYX
 ENGKAH.KL,ENGKAH,MYX:ENGKAH,MYX,ENGKAH,ENGKAH.KL,Eng Kah Corp. Bhd.,Consumer Non-Durables,stock,common,MYX
-OSKVI.KL,OSKVI,MYX:OSKVI,MYX,OSKVI,OSKVI.KL,OSK Ventures International Bhd.,Miscellaneous,stock,common,MYX
 FAREAST.KL,FAREAST,MYX:FAREAST,MYX,FAREAST,FAREAST.KL,Far East Holdings Bhd.,Process Industries,stock,common,MYX
 ADVENTA.KL,ADVENTA,MYX:ADVENTA,MYX,ADVENTA,ADVENTA.KL,Adventa Bhd.,Distribution Services,stock,common,MYX
 AASIA.KL,AASIA,MYX:AASIA,MYX,AASIA,AASIA.KL,Astral Asia Bhd.,Process Industries,stock,common,MYX
 OCB.KL,OCB,MYX:OCB,MYX,OCB,OCB.KL,OCB Bhd.,Distribution Services,stock,common,MYX
 LIONPSIM.KL,LIONPSIM,MYX:LIONPSIM,MYX,LIONPSIM,LIONPSIM.KL,Lion Posim Bhd.,Non-Energy Minerals,stock,common,MYX
 PPHB.KL,PPHB,MYX:PPHB,MYX,PPHB,PPHB.KL,Public Packages Holdings Bhd.,Process Industries,stock,common,MYX
-EAH.KL,EAH,MYX:EAH,MYX,EAH,EAH.KL,EA Holdings Bhd.,Commercial Services,stock,common,MYX
 SUBUR.KL,SUBUR,MYX:SUBUR,MYX,SUBUR,SUBUR.KL,Subur Tiasa Holdings Bhd.,Non-Energy Minerals,stock,common,MYX
-JKGLAND.KL,JKGLAND,MYX:JKGLAND,MYX,JKGLAND,JKGLAND.KL,JKG Land Bhd.,Finance,stock,common,MYX
 YLI.KL,YLI,MYX:YLI,MYX,YLI,YLI.KL,YLI Holdings Bhd.,Producer Manufacturing,stock,common,MYX
 KEINHIN.KL,KEINHIN,MYX:KEINHIN,MYX,KEINHIN,KEINHIN.KL,Kein Hing International Bhd.,Producer Manufacturing,stock,common,MYX
 ALSREIT.KL,ALSREIT,MYX:ALSREIT,MYX,ALSREIT,ALSREIT.KL,Al-Salam Real Estate Investment Trust,Finance,stock,common,MYX
@@ -975,12 +928,8 @@ PNEPCB.KL,PNEPCB,MYX:PNEPCB,MYX,PNEPCB,PNEPCB.KL,PNE PCB Bhd.,Electronic Technol
 MELEWAR.KL,MELEWAR,MYX:MELEWAR,MYX,MELEWAR,MELEWAR.KL,Melewar Industrial Group Bhd.,Non-Energy Minerals,stock,common,MYX
 MYNEWS.KL,MYNEWS,MYX:MYNEWS,MYX,MYNEWS,MYNEWS.KL,Mynews Holdings Bhd,Distribution Services,stock,common,MYX
 PGB.KL,PGB,MYX:PGB,MYX,PGB,PGB.KL,Propel Global Bhd.,Industrial Services,stock,common,MYX
-S&FCAP.KL,S&FCAP,MYX:S&FCAP,MYX,S&FCAP,S&FCAP.KL,S & F Capital Bhd.,Non-Energy Minerals,stock,common,MYX
-TWRREIT.KL,TWRREIT,MYX:TWRREIT,MYX,TWRREIT,TWRREIT.KL,Tower Real Estate Investment Trust,Finance,stock,common,MYX
 CAMRES.KL,CAMRES,MYX:CAMRES,MYX,CAMRES,CAMRES.KL,CAM Resources Bhd.,Process Industries,stock,common,MYX
-ESAFE.KL,ESAFE,MYX:ESAFE,MYX,ESAFE,ESAFE.KL,Eversafe Rubber Bhd.,Consumer Durables,stock,common,MYX
 KANGER.KL,KANGER,MYX:KANGER,MYX,KANGER,KANGER.KL,Kanger International Bhd.,Producer Manufacturing,stock,common,MYX
-ZENTECH.KL,ZENTECH,MYX:ZENTECH,MYX,ZENTECH,ZENTECH.KL,Zen Tech International Bhd,Producer Manufacturing,stock,common,MYX
 SBCCORP.KL,SBCCORP,MYX:SBCCORP,MYX,SBCCORP,SBCCORP.KL,SBC Corporation Berhad,Finance,stock,common,MYX
 SHL.KL,SHL,MYX:SHL,MYX,SHL,SHL.KL,SHL Consolidated Bhd.,Finance,stock,common,MYX
 GCAP.KL,GCAP,MYX:GCAP,MYX,GCAP,GCAP.KL,G Capital Bhd.,Transportation,stock,common,MYX
@@ -989,142 +938,193 @@ GOCEAN.KL,GOCEAN,MYX:GOCEAN,MYX,GOCEAN,GOCEAN.KL,Green Ocean Corp. Bhd.,Process 
 KYM.KL,KYM,MYX:KYM,MYX,KYM,KYM.KL,KYM Holdings Bhd.,Process Industries,stock,common,MYX
 PLYTEC.KL,PLYTEC,MYX:PLYTEC,MYX,PLYTEC,PLYTEC.KL,PLYTEC Holding Berhad,Distribution Services,stock,common,MYX
 HWATAI.KL,HWATAI,MYX:HWATAI,MYX,HWATAI,HWATAI.KL,Hwa Tai Industries Bhd.,Consumer Non-Durables,stock,common,MYX
-SEEHUP.KL,SEEHUP,MYX:SEEHUP,MYX,SEEHUP,SEEHUP.KL,See Hup Consolidated Bhd.,Transportation,stock,common,MYX
-APEX.KL,APEX,MYX:APEX,MYX,APEX,APEX.KL,Apex Equity Holdings Bhd.,Finance,stock,common,MYX
 SHH.KL,SHH,MYX:SHH,MYX,SHH,SHH.KL,SHH Resources Holdings Bhd.,Consumer Durables,stock,common,MYX
 ONEGLOVE.KL,ONEGLOVE,MYX:ONEGLOVE,MYX,ONEGLOVE,ONEGLOVE.KL,One Glove Group Bhd,Health Technology,stock,common,MYX
 ARK.KL,ARK,MYX:ARK,MYX,ARK,ARK.KL,ARK Resources Holdings Bhd.,Industrial Services,stock,common,MYX
 XOXNET.KL,XOXNET,MYX:XOXNET,MYX,XOXNET,XOXNET.KL,XOX NETWORKS BERHAD,Consumer Services,stock,common,MYX
 PMCORP.KL,PMCORP,MYX:PMCORP,MYX,PMCORP,PMCORP.KL,Pan Malaysia Corp. Bhd.,Consumer Non-Durables,stock,common,MYX
 HLT.KL,HLT,MYX:HLT,MYX,HLT,HLT.KL,HLT Global Bhd.,Consumer Non-Durables,stock,common,MYX
-BCMALL.KL,BCMALL,MYX:BCMALL,MYX,BCMALL,BCMALL.KL,BCM Alliance Bhd.,Consumer Durables,stock,common,MYX
 UMSNGB.KL,UMSNGB,MYX:UMSNGB,MYX,UMSNGB,UMSNGB.KL,UMS-Neiken Group Bhd.,Producer Manufacturing,stock,common,MYX
+BCMALL.KL,BCMALL,MYX:BCMALL,MYX,BCMALL,BCMALL.KL,BCM Alliance Bhd.,Consumer Durables,stock,common,MYX
 SLP.KL,SLP,MYX:SLP,MYX,SLP,SLP.KL,SLP Resources Bhd.,Producer Manufacturing,stock,common,MYX
 YENHER.KL,YENHER,MYX:YENHER,MYX,YENHER,YENHER.KL,Yenher Holdings Bhd.,Process Industries,stock,common,MYX
 MEDIAC.KL,MEDIAC,MYX:MEDIAC,MYX,MEDIAC,MEDIAC.KL,Media Chinese International Ltd,Consumer Services,stock,common,MYX
-HIL.KL,HIL,MYX:HIL,MYX,HIL,HIL.KL,HIL Industries Bhd.,Producer Manufacturing,stock,common,MYX
 AIM.KL,AIM,MYX:AIM,MYX,AIM,AIM.KL,Advance Information Marketing Bhd.,Commercial Services,stock,common,MYX
-OMH.KL,OMH,MYX:OMH,MYX,OMH,OMH.KL,OM Holdings Ltd.,Miscellaneous,stock,common,MYX
 CEKD.KL,CEKD,MYX:CEKD,MYX,CEKD,CEKD.KL,CEKD Bhd,Producer Manufacturing,stock,common,MYX
 SASBADI.KL,SASBADI,MYX:SASBADI,MYX,SASBADI,SASBADI.KL,Sasbadi Holdings Bhd,Consumer Services,stock,common,MYX
-DPIH.KL,DPIH,MYX:DPIH,MYX,DPIH,DPIH.KL,DPI Holdings Bhd.,Process Industries,stock,common,MYX
 MERIDIAN.KL,MERIDIAN,MYX:MERIDIAN,MYX,MERIDIAN,MERIDIAN.KL,Meridian Berhad,Finance,stock,common,MYX
 MYCRON.KL,MYCRON,MYX:MYCRON,MYX,MYCRON,MYCRON.KL,Mycron Steel Bhd.,Non-Energy Minerals,stock,common,MYX
 MTOUCHE.KL,MTOUCHE,MYX:MTOUCHE,MYX,MTOUCHE,MTOUCHE.KL,mTouche Technology Bhd.,Technology Services,stock,common,MYX
-TRIMODE.KL,TRIMODE,MYX:TRIMODE,MYX,TRIMODE,TRIMODE.KL,Tri-Mode System (M) Bhd.,Transportation,stock,common,MYX
 Y&G.KL,Y&G,MYX:Y&G,MYX,Y&G,Y&G.KL,Y&G Corporation Bhd.,Finance,stock,common,MYX
 LOTUSCIR.KL,LOTUSCIR,MYX:LOTUSCIR,MYX,LOTUSCIR,LOTUSCIR.KL,Lotus Circular Bhd,Retail Trade,stock,common,MYX
-EIG.KL,EIG,MYX:EIG,MYX,EIG,EIG.KL,Esthetics International Group Bhd.,Consumer Services,stock,common,MYX
-LKL.KL,LKL,MYX:LKL,MYX,LKL,LKL.KL,LKL International Bhd.,Health Technology,stock,common,MYX
 OGM.KL,OGM,MYX:OGM,MYX,OGM,OGM.KL,One Gasmaster Holdings Berhad,Commercial Services,stock,common,MYX
 MAYU.KL,MAYU,MYX:MAYU,MYX,MAYU,MAYU.KL,MAYU GLOBAL GROUP Bhd,Consumer Durables,stock,common,MYX
 PHB.KL,PHB,MYX:PHB,MYX,PHB,PHB.KL,Pegasus Heights Bhd,Distribution Services,stock,common,MYX
 PERMAJU.KL,PERMAJU,MYX:PERMAJU,MYX,PERMAJU,PERMAJU.KL,Permaju Industries Bhd.,Retail Trade,stock,common,MYX
 ECOHLDS.KL,ECOHLDS,MYX:ECOHLDS,MYX,ECOHLDS,ECOHLDS.KL,Ecobuilt Holdings Bhd.,Industrial Services,stock,common,MYX
 BTM.KL,BTM,MYX:BTM,MYX,BTM,BTM.KL,BTM Resources Bhd.,Non-Energy Minerals,stock,common,MYX
-MYAXIS.KL,MYAXIS,MYX:MYAXIS,MYX,MYAXIS,MYAXIS.KL,MyAxis Group Bhd.,Consumer Non-Durables,stock,common,MYX
-HPPHB.KL,HPPHB,MYX:HPPHB,MYX,HPPHB,HPPHB.KL,HPP Holdings Bhd,Process Industries,stock,common,MYX
-PEB.KL,PEB,MYX:PEB,MYX,PEB,PEB.KL,Pimpinan Ehsan Berhad,Finance,stock,common,MYX
-AAI.KL,AAI,MYX:AAI,MYX,AAI,AAI.KL,Associated Air-Pak Industries Berhad,Process Industries,stock,common,MYX
-YONGTAI-PA.KL,YONGTAI-PA,MYX:YONGTAI-PA,MYX,YONGTAI-PA,YONGTAI-PA.KL,Yong Tai Bhd Irred Conv Pref Registered 2016-27.11.26,Finance,stock,preferred,MYX
-FACBIND.KL,FACBIND,MYX:FACBIND,MYX,FACBIND,FACBIND.KL,FACB Industries Inc. Bhd.,Consumer Durables,stock,common,MYX
-QUALITY.KL,QUALITY,MYX:QUALITY,MYX,QUALITY,QUALITY.KL,Quality Concrete Holdings Bhd.,Non-Energy Minerals,stock,common,MYX
-BCB.KL,BCB,MYX:BCB,MYX,BCB,BCB.KL,BCB BHD,Finance,stock,common,MYX
-RGS.KL,RGS,MYX:RGS,MYX,RGS,RGS.KL,Ray Go Solar Holdings Bhd.,Industrial Services,stock,common,MYX
-WOODLAN.KL,WOODLAN,MYX:WOODLAN,MYX,WOODLAN,WOODLAN.KL,Woodlandor Holdings Bhd.,Non-Energy Minerals,stock,common,MYX
-MSNIAGA.KL,MSNIAGA,MYX:MSNIAGA,MYX,MSNIAGA,MSNIAGA.KL,Mesiniaga Bhd.,Technology Services,stock,common,MYX
-UPA.KL,UPA,MYX:UPA,MYX,UPA,UPA.KL,UPA Corporation Bhd.,Process Industries,stock,common,MYX
-ASTRA.KL,ASTRA,MYX:ASTRA,MYX,ASTRA,ASTRA.KL,Astramina Group Bhd.,Consumer Non-Durables,stock,common,MYX
-PLB.KL,PLB,MYX:PLB,MYX,PLB,PLB.KL,PLB Engineering Bhd.,Consumer Durables,stock,common,MYX
-IDBTECH.KL,IDBTECH,MYX:IDBTECH,MYX,IDBTECH,IDBTECH.KL,IDB Technologies Bhd,Technology Services,stock,common,MYX
-DSR.KL,DSR,MYX:DSR,MYX,DSR,DSR.KL,DSR Taiko Bhd,Process Industries,stock,common,MYX
-DFCITY.KL,DFCITY,MYX:DFCITY,MYX,DFCITY,DFCITY.KL,DFCITY Group Bhd.,Non-Energy Minerals,stock,common,MYX
-CLOUD.KL,CLOUD,MYX:CLOUD,MYX,CLOUD,CLOUD.KL,Cloudaron Group Bhd.,Technology Services,stock,common,MYX
-TPTEC.KL,TPTEC,MYX:TPTEC,MYX,TPTEC,TPTEC.KL,TP Tec Holding Bhd.,Distribution Services,stock,common,MYX
-LAMBO.KL,LAMBO,MYX:LAMBO,MYX,LAMBO,LAMBO.KL,Lambo Group Bhd.,Distribution Services,stock,common,MYX
-KEN.KL,KEN,MYX:KEN,MYX,KEN,KEN.KL,Ken Holdings Bhd.,Industrial Services,stock,common,MYX
+WHITMAN.KL,WHITMAN,MYX:WHITMAN,MYX,WHITMAN,WHITMAN.KL,Whitman Holdings Berhad,Finance,stock,common,MYX
+LBICAP.KL,LBICAP,MYX:LBICAP,MYX,LBICAP,LBICAP.KL,LBI Capital Bhd.,Finance,stock,common,MYX
+HHHCORP.KL,HHHCORP,MYX:HHHCORP,MYX,HHHCORP,HHHCORP.KL,Hiap Huat Holdings Bhd.,Energy Minerals,stock,common,MYX
+TEXCYCL.KL,TEXCYCL,MYX:TEXCYCL,MYX,TEXCYCL,TEXCYCL.KL,Tex Cycle Technology (M) Bhd.,Industrial Services,stock,common,MYX
+TGL.KL,TGL,MYX:TGL,MYX,TGL,TGL.KL,Teo Guan Lee Corp. Bhd.,Consumer Non-Durables,stock,common,MYX
+AORB.KL,AORB,MYX:AORB,MYX,AORB,AORB.KL,Alpha Ocean Resources Bhd.,Process Industries,stock,common,MYX
+ESYS.KL,ESYS,MYX:ESYS,MYX,ESYS,ESYS.KL,ESYS Holdings Berhad,Industrial Services,stock,common,MYX
+CWG.KL,CWG,MYX:CWG,MYX,CWG,CWG.KL,CWG Holdings Bhd.,Producer Manufacturing,stock,common,MYX
+FIBON.KL,FIBON,MYX:FIBON,MYX,FIBON,FIBON.KL,Fibon Bhd.,Process Industries,stock,common,MYX
+APEX.KL,APEX,MYX:APEX,MYX,APEX,APEX.KL,Apex Equity Holdings Bhd.,Finance,stock,common,MYX
+SYCAL.KL,SYCAL,MYX:SYCAL,MYX,SYCAL,SYCAL.KL,Sycal Ventures Berhad,Non-Energy Minerals,stock,common,MYX
 SEB.KL,SEB,MYX:SEB,MYX,SEB,SEB.KL,Seremban Engineering Bhd.,Producer Manufacturing,stock,common,MYX
-ETA.KL,ETA,MYX:ETA,MYX,ETA,ETA.KL,ETA Group Berhad,Consumer Non-Durables,stock,common,MYX
+BENTLEY.KL,BENTLEY,MYX:BENTLEY,MYX,BENTLEY,BENTLEY.KL,Bentley Music Group Berhad,Distribution Services,stock,common,MYX
+GPHAROS.KL,GPHAROS,MYX:GPHAROS,MYX,GPHAROS,GPHAROS.KL,Golden Pharos Bhd.,Producer Manufacturing,stock,common,MYX
+RTSTECH.KL,RTSTECH,MYX:RTSTECH,MYX,RTSTECH,RTSTECH.KL,RTS Technology Holdings Bhd,Transportation,stock,common,MYX
+PTRB.KL,PTRB,MYX:PTRB,MYX,PTRB,PTRB.KL,PT Resources Holdings Bhd.,Consumer Non-Durables,stock,common,MYX
+AAI.KL,AAI,MYX:AAI,MYX,AAI,AAI.KL,Associated Air-Pak Industries Berhad,Process Industries,stock,common,MYX
+JISHAN.KL,JISHAN,MYX:JISHAN,MYX,JISHAN,JISHAN.KL,Jishan Bhd.,Process Industries,stock,common,MYX
+BVLH.KL,BVLH,MYX:BVLH,MYX,BVLH,BVLH.KL,BV Land Holdings Bhd.,Consumer Durables,stock,common,MYX
+OMH.KL,OMH,MYX:OMH,MYX,OMH,OMH.KL,OM Holdings Ltd.,Miscellaneous,stock,common,MYX
+UTAMA.KL,UTAMA,MYX:UTAMA,MYX,UTAMA,UTAMA.KL,UCI Resources Bhd.,Non-Energy Minerals,stock,common,MYX
+SEACERA.KL,SEACERA,MYX:SEACERA,MYX,SEACERA,SEACERA.KL,Seacera Group Bhd.,Producer Manufacturing,stock,common,MYX
+GMUTUAL.KL,GMUTUAL,MYX:GMUTUAL,MYX,GMUTUAL,GMUTUAL.KL,Gromutual Bhd.,Finance,stock,common,MYX
+MILUX.KL,MILUX,MYX:MILUX,MYX,MILUX,MILUX.KL,Milux Corp. Bhd.,Consumer Durables,stock,common,MYX
+EAH.KL,EAH,MYX:EAH,MYX,EAH,EAH.KL,EA Holdings Bhd.,Commercial Services,stock,common,MYX
+WARISAN.KL,WARISAN,MYX:WARISAN,MYX,WARISAN,WARISAN.KL,Warisan TC Holdings Bhd.,Commercial Services,stock,common,MYX
+CHINWEL.KL,CHINWEL,MYX:CHINWEL,MYX,CHINWEL,CHINWEL.KL,Chin Well Holdings Bhd.,Producer Manufacturing,stock,common,MYX
+MERCURY.KL,MERCURY,MYX:MERCURY,MYX,MERCURY,MERCURY.KL,Mercury Industries Bhd,Industrial Services,stock,common,MYX
+SUNMOW-PA.KL,SUNMOW-PA,MYX:SUNMOW-PA,MYX,SUNMOW-PA,SUNMOW-PA.KL,Sunmow Holding Bhd Cum-Red Non Conv Pref Registered Shs 2024,Industrial Services,stock,preferred,MYX
+SLIC.KL,SLIC,MYX:SLIC,MYX,SLIC,SLIC.KL,SL Innovation Capital Bhd.,Technology Services,stock,common,MYX
+KHJB.KL,KHJB,MYX:KHJB,MYX,KHJB,KHJB.KL,Kim Hin Joo (Malaysia) Bhd.,Retail Trade,stock,common,MYX
+TASHIN.KL,TASHIN,MYX:TASHIN,MYX,TASHIN,TASHIN.KL,Tashin Holdings Bhd.,Non-Energy Minerals,stock,common,MYX
+SAB.KL,SAB,MYX:SAB,MYX,SAB,SAB.KL,Southern Acids (Malaysia) Bhd.,Miscellaneous,stock,common,MYX
+SMILE.KL,SMILE,MYX:SMILE,MYX,SMILE,SMILE.KL,Smile-Link Healthcare Global Bhd.,Health Services,stock,common,MYX
+EKSONS.KL,EKSONS,MYX:EKSONS,MYX,EKSONS,EKSONS.KL,Eksons Corp. Bhd.,Finance,stock,common,MYX
+FCW.KL,FCW,MYX:FCW,MYX,FCW,FCW.KL,FCW Holdings Bhd.,Consumer Non-Durables,stock,common,MYX
 DYNAMIC.KL,DYNAMIC,MYX:DYNAMIC,MYX,DYNAMIC,DYNAMIC.KL,Total Dynamic Holdings Bhd,Electronic Technology,stock,common,MYX
-SMTRACK.KL,SMTRACK,MYX:SMTRACK,MYX,SMTRACK,SMTRACK.KL,SMTrack Bhd.,Electronic Technology,stock,common,MYX
-MELATI.KL,MELATI,MYX:MELATI,MYX,MELATI,MELATI.KL,Melati Ehsan Holdings Bhd.,Industrial Services,stock,common,MYX
-RPLANET.KL,RPLANET,MYX:RPLANET,MYX,RPLANET,RPLANET.KL,RedPlanet Bhd,Industrial Services,stock,common,MYX
 MMIS.KL,MMIS,MYX:MMIS,MYX,MMIS,MMIS.KL,MMIS Bhd.,Producer Manufacturing,stock,common,MYX
-TSRCAP.KL,TSRCAP,MYX:TSRCAP,MYX,TSRCAP,TSRCAP.KL,TSR Capital Bhd.,Industrial Services,stock,common,MYX
-DYNAFNT.KL,DYNAFNT,MYX:DYNAFNT,MYX,DYNAFNT,DYNAFNT.KL,Dynafront Holdings Bhd.,Technology Services,stock,common,MYX
+UMS.KL,UMS,MYX:UMS,MYX,UMS,UMS.KL,UMS Holdings Bhd.,Distribution Services,stock,common,MYX
+CCIB.KL,CCIB,MYX:CCIB,MYX,CCIB,CCIB.KL,CC International Bhd.,Commercial Services,stock,common,MYX
+MUH.KL,MUH,MYX:MUH,MYX,MUH,MUH.KL,Multi-Usage Holdings Bhd.,Finance,stock,common,MYX
+METROD.KL,METROD,MYX:METROD,MYX,METROD,METROD.KL,Metrod Holdings Bhd.,Producer Manufacturing,stock,common,MYX
+CME.KL,CME,MYX:CME,MYX,CME,CME.KL,CME Group Bhd.,Consumer Durables,stock,common,MYX
+SALCON.KL,SALCON,MYX:SALCON,MYX,SALCON,SALCON.KL,Salcon Bhd.,Distribution Services,stock,common,MYX
+FAST.KL,FAST,MYX:FAST,MYX,FAST,FAST.KL,Fast Energy Holdings Bhd,Transportation,stock,common,MYX
+JKGLAND.KL,JKGLAND,MYX:JKGLAND,MYX,JKGLAND,JKGLAND.KL,JKG Land Bhd.,Finance,stock,common,MYX
+EIG.KL,EIG,MYX:EIG,MYX,EIG,EIG.KL,Esthetics International Group Bhd.,Consumer Services,stock,common,MYX
+IDBTECH.KL,IDBTECH,MYX:IDBTECH,MYX,IDBTECH,IDBTECH.KL,IDB Technologies Bhd,Technology Services,stock,common,MYX
+LSTEEL.KL,LSTEEL,MYX:LSTEEL,MYX,LSTEEL,LSTEEL.KL,Leader Steel Holdings Bhd.,Non-Energy Minerals,stock,common,MYX
+HPI.KL,HPI,MYX:HPI,MYX,HPI,HPI.KL,Hydropipes Bhd.,Producer Manufacturing,stock,common,MYX
+SEERS.KL,SEERS,MYX:SEERS,MYX,SEERS,SEERS.KL,Seers Bhd.,Producer Manufacturing,stock,common,MYX
+PLB.KL,PLB,MYX:PLB,MYX,PLB,PLB.KL,PLB Engineering Bhd.,Consumer Durables,stock,common,MYX
+SCB.KL,SCB,MYX:SCB,MYX,SCB,SCB.KL,Sik Cheong Berhad,Commercial Services,stock,common,MYX
+SUNMOW.KL,SUNMOW,MYX:SUNMOW,MYX,SUNMOW,SUNMOW.KL,Sunmow Holding Bhd,Industrial Services,stock,common,MYX
+HANDAL.KL,HANDAL,MYX:HANDAL,MYX,HANDAL,HANDAL.KL,Handal Energy Bhd.,Industrial Services,stock,common,MYX
+PERTAMA.KL,PERTAMA,MYX:PERTAMA,MYX,PERTAMA,PERTAMA.KL,Pertama Digital Bhd.,Technology Services,stock,common,MYX
+NHFATT.KL,NHFATT,MYX:NHFATT,MYX,NHFATT,NHFATT.KL,New Hoong Fatt Holdings Bhd.,Producer Manufacturing,stock,common,MYX
+BIPORT.KL,BIPORT,MYX:BIPORT,MYX,BIPORT,BIPORT.KL,Bintulu Port Holdings Bhd.,Transportation,stock,common,MYX
+VOLCANO.KL,VOLCANO,MYX:VOLCANO,MYX,VOLCANO,VOLCANO.KL,Volcano Bhd.,Producer Manufacturing,stock,common,MYX
+LEBTECH.KL,LEBTECH,MYX:LEBTECH,MYX,LEBTECH,LEBTECH.KL,Lebtech Bhd.,Industrial Services,stock,common,MYX
+FACBIND.KL,FACBIND,MYX:FACBIND,MYX,FACBIND,FACBIND.KL,FACB Industries Inc. Bhd.,Consumer Durables,stock,common,MYX
 SAFETY.KL,SAFETY,MYX:SAFETY,MYX,SAFETY,SAFETY.KL,Safetyware Group Bhd,Health Technology,stock,common,MYX
 AUTORIS.KL,AUTORIS,MYX:AUTORIS,MYX,AUTORIS,AUTORIS.KL,Autoris Group Holdings Bhd,Miscellaneous,stock,common,MYX
-ETH.KL,ETH,MYX:ETH,MYX,ETH,ETH.KL,EquitiesTracker Holdings Bhd.,Technology Services,stock,common,MYX
-UTAMA.KL,UTAMA,MYX:UTAMA,MYX,UTAMA,UTAMA.KL,UCI Resources Bhd.,Non-Energy Minerals,stock,common,MYX
-SMILE.KL,SMILE,MYX:SMILE,MYX,SMILE,SMILE.KL,Smile-Link Healthcare Global Bhd.,Health Services,stock,common,MYX
-WHITMAN.KL,WHITMAN,MYX:WHITMAN,MYX,WHITMAN,WHITMAN.KL,Whitman Holdings Berhad,Finance,stock,common,MYX
-MILOLO.KL,MILOLO,MYX:MILOLO,MYX,MILOLO,MILOLO.KL,Milolo Berhad,Commercial Services,stock,common,MYX
-CME.KL,CME,MYX:CME,MYX,CME,CME.KL,CME Group Bhd.,Consumer Durables,stock,common,MYX
-CETECH.KL,CETECH,MYX:CETECH,MYX,CETECH,CETECH.KL,CE Technology Bhd.,Producer Manufacturing,stock,common,MYX
-PERTAMA.KL,PERTAMA,MYX:PERTAMA,MYX,PERTAMA,PERTAMA.KL,Pertama Digital Bhd.,Technology Services,stock,common,MYX
-BENTLEY.KL,BENTLEY,MYX:BENTLEY,MYX,BENTLEY,BENTLEY.KL,Bentley Music Group Berhad,Distribution Services,stock,common,MYX
-AYER.KL,AYER,MYX:AYER,MYX,AYER,AYER.KL,AYER Holdings Bhd,Finance,stock,common,MYX
-RTSTECH.KL,RTSTECH,MYX:RTSTECH,MYX,RTSTECH,RTSTECH.KL,RTS Technology Holdings Bhd,Transportation,stock,common,MYX
-BABA.KL,BABA,MYX:BABA,MYX,BABA,BABA.KL,Baba Eco Group Bhd,Producer Manufacturing,stock,common,MYX
-TASHIN.KL,TASHIN,MYX:TASHIN,MYX,TASHIN,TASHIN.KL,Tashin Holdings Bhd.,Non-Energy Minerals,stock,common,MYX
-SUNMOW.KL,SUNMOW,MYX:SUNMOW,MYX,SUNMOW,SUNMOW.KL,Sunmow Holding Bhd,Industrial Services,stock,common,MYX
-SEACERA.KL,SEACERA,MYX:SEACERA,MYX,SEACERA,SEACERA.KL,Seacera Group Bhd.,Producer Manufacturing,stock,common,MYX
-PARKWD.KL,PARKWD,MYX:PARKWD,MYX,PARKWD,PARKWD.KL,Parkwood Holdings Bhd.,Finance,stock,common,MYX
-RHONEMA.KL,RHONEMA,MYX:RHONEMA,MYX,RHONEMA,RHONEMA.KL,Rhone Ma Holdings Bhd.,Process Industries,stock,common,MYX
-SIGN.KL,SIGN,MYX:SIGN,MYX,SIGN,SIGN.KL,Signature International Bhd.,Miscellaneous,stock,common,MYX
-AURORA.KL,AURORA,MYX:AURORA,MYX,AURORA,AURORA.KL,Aurora Italia International Bhd.,Consumer Durables,stock,common,MYX
-AFUJIYA.KL,AFUJIYA,MYX:AFUJIYA,MYX,AFUJIYA,AFUJIYA.KL,ABM Fujiya Bhd.,Consumer Durables,stock,common,MYX
-GOPENG.KL,GOPENG,MYX:GOPENG,MYX,GOPENG,GOPENG.KL,Gopeng Bhd.,Process Industries,stock,common,MYX
-LBICAP.KL,LBICAP,MYX:LBICAP,MYX,LBICAP,LBICAP.KL,LBI Capital Bhd.,Finance,stock,common,MYX
-DAY3.KL,DAY3,MYX:DAY3,MYX,DAY3,DAY3.KL,Daythree Digital Bhd,Commercial Services,stock,common,MYX
-PING.KL,PING,MYX:PING,MYX,PING,PING.KL,Ping Edge Technology Berhad,Distribution Services,stock,common,MYX
-MCOM.KL,MCOM,MYX:MCOM,MYX,MCOM,MCOM.KL,MCOM Holdings Berhad,Commercial Services,stock,common,MYX
-ORNA.KL,ORNA,MYX:ORNA,MYX,ORNA,ORNA.KL,Ornapaper Bhd.,Process Industries,stock,common,MYX
-UNIWALL.KL,UNIWALL,MYX:UNIWALL,MYX,UNIWALL,UNIWALL.KL,Uni Wall Aps Holdings Bhd,Distribution Services,stock,common,MYX
-EUROSP.KL,EUROSP,MYX:EUROSP,MYX,EUROSP,EUROSP.KL,Eurospan Holdings Bhd.,Consumer Durables,stock,common,MYX
-MPSOL.KL,MPSOL,MYX:MPSOL,MYX,MPSOL,MPSOL.KL,Matrix Parking Solution Holdings Bhd,Consumer Services,stock,common,MYX
-NOESIS.KL,NOESIS,MYX:NOESIS,MYX,NOESIS,NOESIS.KL,Noesis Exed Berhad,Commercial Services,stock,common,MYX
-HANDAL.KL,HANDAL,MYX:HANDAL,MYX,HANDAL,HANDAL.KL,Handal Energy Bhd.,Industrial Services,stock,common,MYX
-SBH.KL,SBH,MYX:SBH,MYX,SBH,SBH.KL,SBH Marine Holdings Bhd.,Consumer Non-Durables,stock,common,MYX
-1TECH.KL,1TECH,MYX:1TECH,MYX,1TECH,1TECH.KL,OneTech Solutions Holdings Bhd.,Technology Services,stock,common,MYX
-ASDION.KL,ASDION,MYX:ASDION,MYX,ASDION,ASDION.KL,Asdion Bhd.,Transportation,stock,common,MYX
-JAGAAPP.KL,JAGAAPP,MYX:JAGAAPP,MYX,JAGAAPP,JAGAAPP.KL,Jagasolution Berhad,Technology Services,stock,common,MYX
-JCBNEXT.KL,JCBNEXT,MYX:JCBNEXT,MYX,JCBNEXT,JCBNEXT.KL,JcbNext Bhd.,Commercial Services,stock,common,MYX
-TSIC.KL,TSIC,MYX:TSIC,MYX,TSIC,TSIC.KL,TSiC Bhd.,Miscellaneous,stock,common,MYX
-SANCY.KL,SANCY,MYX:SANCY,MYX,SANCY,SANCY.KL,Sancy Bhd,Technology Services,stock,common,MYX
-DKLS.KL,DKLS,MYX:DKLS,MYX,DKLS,DKLS.KL,DKLS Industries Bhd.,Non-Energy Minerals,stock,common,MYX
-JISHAN.KL,JISHAN,MYX:JISHAN,MYX,JISHAN,JISHAN.KL,Jishan Bhd.,Process Industries,stock,common,MYX
-CWG.KL,CWG,MYX:CWG,MYX,CWG,CWG.KL,CWG Holdings Bhd.,Producer Manufacturing,stock,common,MYX
-PTRB.KL,PTRB,MYX:PTRB,MYX,PTRB,PTRB.KL,PT Resources Holdings Bhd.,Consumer Non-Durables,stock,common,MYX
-MMM.KL,MMM,MYX:MMM,MYX,MMM,MMM.KL,MMM Group Berhad,Commercial Services,stock,common,MYX
-CCIB.KL,CCIB,MYX:CCIB,MYX,CCIB,CCIB.KL,CC International Bhd.,Commercial Services,stock,common,MYX
-BIMOFFICE.KL,BIMOFFICE,MYX:BIMOFFICE,MYX,BIMOFFICE,BIMOFFICE.KL,BIMOffice Group Bhd.,Technology Services,stock,common,MYX
-MILUX.KL,MILUX,MYX:MILUX,MYX,MILUX,MILUX.KL,Milux Corp. Bhd.,Consumer Durables,stock,common,MYX
-KHJB.KL,KHJB,MYX:KHJB,MYX,KHJB,KHJB.KL,Kim Hin Joo (Malaysia) Bhd.,Retail Trade,stock,common,MYX
-ESYS.KL,ESYS,MYX:ESYS,MYX,ESYS,ESYS.KL,ESYS Holdings Berhad,Industrial Services,stock,common,MYX
-WATTA.KL,WATTA,MYX:WATTA,MYX,WATTA,WATTA.KL,Watta Holding Bhd.,Distribution Services,stock,common,MYX
-EMICO.KL,EMICO,MYX:EMICO,MYX,EMICO,EMICO.KL,Emico Holdings Bhd.,Producer Manufacturing,stock,common,MYX
+SEEHUP.KL,SEEHUP,MYX:SEEHUP,MYX,SEEHUP,SEEHUP.KL,See Hup Consolidated Bhd.,Transportation,stock,common,MYX
+MJPERAK.KL,MJPERAK,MYX:MJPERAK,MYX,MJPERAK,MJPERAK.KL,Majuperak Holdings Bhd.,Finance,stock,common,MYX
 SNOWFIT.KL,SNOWFIT,MYX:SNOWFIT,MYX,SNOWFIT,SNOWFIT.KL,Snowfit Group Bhd,Retail Trade,stock,common,MYX
-SEERS.KL,SEERS,MYX:SEERS,MYX,SEERS,SEERS.KL,Seers Bhd.,Producer Manufacturing,stock,common,MYX
-SUNMOW-PA.KL,SUNMOW-PA,MYX:SUNMOW-PA,MYX,SUNMOW-PA,SUNMOW-PA.KL,Sunmow Holding Bhd Cum-Red Non Conv Pref Registered Shs 2024,Industrial Services,stock,preferred,MYX
-AORB.KL,AORB,MYX:AORB,MYX,AORB,AORB.KL,Alpha Ocean Resources Bhd.,Process Industries,stock,common,MYX
-SLIC.KL,SLIC,MYX:SLIC,MYX,SLIC,SLIC.KL,SL Innovation Capital Bhd.,Technology Services,stock,common,MYX
-CROESUS.KL,CROESUS,MYX:CROESUS,MYX,CROESUS,CROESUS.KL,Croesus IT Holdings Berhad,Technology Services,stock,common,MYX
+LAMBO.KL,LAMBO,MYX:LAMBO,MYX,LAMBO,LAMBO.KL,Lambo Group Bhd.,Distribution Services,stock,common,MYX
+BCB.KL,BCB,MYX:BCB,MYX,BCB,BCB.KL,BCB BHD,Finance,stock,common,MYX
 POLYDM.KL,POLYDM,MYX:POLYDM,MYX,POLYDM,POLYDM.KL,Polydamic Group Bhd.,Electronic Technology,stock,common,MYX
-TJSETIA.KL,TJSETIA,MYX:TJSETIA,MYX,TJSETIA,TJSETIA.KL,Tuju Setia Bhd.,Industrial Services,stock,common,MYX
-NP.KL,NP,MYX:NP,MYX,NP,NP.KL,Novelplus Technology Bhd,Technology Services,stock,common,MYX
-BVLH.KL,BVLH,MYX:BVLH,MYX,BVLH,BVLH.KL,BV Land Holdings Bhd.,Consumer Durables,stock,common,MYX
-TURBO.KL,TURBO,MYX:TURBO,MYX,TURBO,TURBO.KL,Turbo-Mech Bhd.,Distribution Services,stock,common,MYX
-LEBTECH.KL,LEBTECH,MYX:LEBTECH,MYX,LEBTECH,LEBTECH.KL,Lebtech Bhd.,Industrial Services,stock,common,MYX
-INNITY.KL,INNITY,MYX:INNITY,MYX,INNITY,INNITY.KL,Innity Corp. Bhd.,Commercial Services,stock,common,MYX
-SCC.KL,SCC,MYX:SCC,MYX,SCC,SCC.KL,SCC Holdings Bhd.,Distribution Services,stock,common,MYX
-EIB.KL,EIB,MYX:EIB,MYX,EIB,EIB.KL,Ecoscience International Bhd.,Industrial Services,stock,common,MYX
-ASIABRN.KL,ASIABRN,MYX:ASIABRN,MYX,ASIABRN,ASIABRN.KL,Asia Brands Bhd.,Distribution Services,stock,common,MYX
-AMLEX.KL,AMLEX,MYX:AMLEX,MYX,AMLEX,AMLEX.KL,Amlex Holdings Bhd.,Electronic Technology,stock,common,MYX
-LSTEEL.KL,LSTEEL,MYX:LSTEEL,MYX,LSTEEL,LSTEEL.KL,Leader Steel Holdings Bhd.,Non-Energy Minerals,stock,common,MYX
-GMUTUAL.KL,GMUTUAL,MYX:GMUTUAL,MYX,GMUTUAL,GMUTUAL.KL,Gromutual Bhd.,Finance,stock,common,MYX
-WARISAN.KL,WARISAN,MYX:WARISAN,MYX,WARISAN,WARISAN.KL,Warisan TC Holdings Bhd.,Commercial Services,stock,common,MYX
+TSIC.KL,TSIC,MYX:TSIC,MYX,TSIC,TSIC.KL,TSiC Bhd.,Miscellaneous,stock,common,MYX
+ORNA.KL,ORNA,MYX:ORNA,MYX,ORNA,ORNA.KL,Ornapaper Bhd.,Process Industries,stock,common,MYX
+ASDION.KL,ASDION,MYX:ASDION,MYX,ASDION,ASDION.KL,Asdion Bhd.,Transportation,stock,common,MYX
+IMASPRO.KL,IMASPRO,MYX:IMASPRO,MYX,IMASPRO,IMASPRO.KL,Imaspro Corp. Bhd.,Process Industries,stock,common,MYX
+MMM.KL,MMM,MYX:MMM,MYX,MMM,MMM.KL,MMM Group Berhad,Commercial Services,stock,common,MYX
+JAYCORP.KL,JAYCORP,MYX:JAYCORP,MYX,JAYCORP,JAYCORP.KL,Jaycorp Berhad,Consumer Durables,stock,common,MYX
+HEXTECH.KL,HEXTECH,MYX:HEXTECH,MYX,HEXTECH,HEXTECH.KL,Hextar Technologies Solutions Berhad.,Distribution Services,stock,common,MYX
+DKLS.KL,DKLS,MYX:DKLS,MYX,DKLS,DKLS.KL,DKLS Industries Bhd.,Non-Energy Minerals,stock,common,MYX
+DYNAFNT.KL,DYNAFNT,MYX:DYNAFNT,MYX,DYNAFNT,DYNAFNT.KL,Dynafront Holdings Bhd.,Technology Services,stock,common,MYX
+RHONEMA.KL,RHONEMA,MYX:RHONEMA,MYX,RHONEMA,RHONEMA.KL,Rhone Ma Holdings Bhd.,Process Industries,stock,common,MYX
 SGBHD.KL,SGBHD,MYX:SGBHD,MYX,SGBHD,SGBHD.KL,Supergenics Bhd,Industrial Services,stock,common,MYX
-HPI.KL,HPI,MYX:HPI,MYX,HPI,HPI.KL,Hydropipes Bhd.,Producer Manufacturing,stock,common,MYX
+MYAXIS.KL,MYAXIS,MYX:MYAXIS,MYX,MYAXIS,MYAXIS.KL,MyAxis Group Bhd.,Consumer Non-Durables,stock,common,MYX
+TSRCAP.KL,TSRCAP,MYX:TSRCAP,MYX,TSRCAP,TSRCAP.KL,TSR Capital Bhd.,Industrial Services,stock,common,MYX
+SINKUNG.KL,SINKUNG,MYX:SINKUNG,MYX,SINKUNG,SINKUNG.KL,Sin-Kung Logistics Bhd.,Transportation,stock,common,MYX
+SCC.KL,SCC,MYX:SCC,MYX,SCC,SCC.KL,SCC Holdings Bhd.,Distribution Services,stock,common,MYX
+ECEXCEL.KL,ECEXCEL,MYX:ECEXCEL,MYX,ECEXCEL,ECEXCEL.KL,EC Excel Holdings Berhad,Non-Energy Minerals,stock,common,MYX
+DSR.KL,DSR,MYX:DSR,MYX,DSR,DSR.KL,DSR Taiko Bhd,Process Industries,stock,common,MYX
+ESAFE.KL,ESAFE,MYX:ESAFE,MYX,ESAFE,ESAFE.KL,Eversafe Rubber Bhd.,Consumer Durables,stock,common,MYX
+TWRREIT.KL,TWRREIT,MYX:TWRREIT,MYX,TWRREIT,TWRREIT.KL,Tower Real Estate Investment Trust,Finance,stock,common,MYX
+AGRICOR.KL,AGRICOR,MYX:AGRICOR,MYX,AGRICOR,AGRICOR.KL,Agricore CS Holdings Bhd,Distribution Services,stock,common,MYX
+HIL.KL,HIL,MYX:HIL,MYX,HIL,HIL.KL,HIL Industries Bhd.,Producer Manufacturing,stock,common,MYX
+AFUJIYA.KL,AFUJIYA,MYX:AFUJIYA,MYX,AFUJIYA,AFUJIYA.KL,ABM Fujiya Bhd.,Consumer Durables,stock,common,MYX
+P&O.KL,P&O,MYX:P&O,MYX,P&O,P&O.KL,Pacific & Orient Bhd.,Finance,stock,common,MYX
+MYTECH.KL,MYTECH,MYX:MYTECH,MYX,MYTECH,MYTECH.KL,MyTech Group Berhad,Producer Manufacturing,stock,common,MYX
+HPPHB.KL,HPPHB,MYX:HPPHB,MYX,HPPHB,HPPHB.KL,HPP Holdings Bhd,Process Industries,stock,common,MYX
+YONGTAI-PA.KL,YONGTAI-PA,MYX:YONGTAI-PA,MYX,YONGTAI-PA,YONGTAI-PA.KL,Yong Tai Bhd Irred Conv Pref Registered 2016-27.11.26,Finance,stock,preferred,MYX
+PEB.KL,PEB,MYX:PEB,MYX,PEB,PEB.KL,Pimpinan Ehsan Berhad,Finance,stock,common,MYX
+EMICO.KL,EMICO,MYX:EMICO,MYX,EMICO,EMICO.KL,Emico Holdings Bhd.,Producer Manufacturing,stock,common,MYX
+AURORA.KL,AURORA,MYX:AURORA,MYX,AURORA,AURORA.KL,Aurora Italia International Bhd.,Consumer Durables,stock,common,MYX
+DPIH.KL,DPIH,MYX:DPIH,MYX,DPIH,DPIH.KL,DPI Holdings Bhd.,Process Industries,stock,common,MYX
+LKL.KL,LKL,MYX:LKL,MYX,LKL,LKL.KL,LKL International Bhd.,Health Technology,stock,common,MYX
+UPA.KL,UPA,MYX:UPA,MYX,UPA,UPA.KL,UPA Corporation Bhd.,Process Industries,stock,common,MYX
+AMLEX.KL,AMLEX,MYX:AMLEX,MYX,AMLEX,AMLEX.KL,Amlex Holdings Bhd.,Electronic Technology,stock,common,MYX
+TRIMODE.KL,TRIMODE,MYX:TRIMODE,MYX,TRIMODE,TRIMODE.KL,Tri-Mode System (M) Bhd.,Transportation,stock,common,MYX
+JCBNEXT.KL,JCBNEXT,MYX:JCBNEXT,MYX,JCBNEXT,JCBNEXT.KL,JcbNext Bhd.,Commercial Services,stock,common,MYX
+WOODLAN.KL,WOODLAN,MYX:WOODLAN,MYX,WOODLAN,WOODLAN.KL,Woodlandor Holdings Bhd.,Non-Energy Minerals,stock,common,MYX
+DFCITY.KL,DFCITY,MYX:DFCITY,MYX,DFCITY,DFCITY.KL,DFCITY Group Bhd.,Non-Energy Minerals,stock,common,MYX
+MCOM.KL,MCOM,MYX:MCOM,MYX,MCOM,MCOM.KL,MCOM Holdings Berhad,Commercial Services,stock,common,MYX
+RPLANET.KL,RPLANET,MYX:RPLANET,MYX,RPLANET,RPLANET.KL,RedPlanet Bhd,Industrial Services,stock,common,MYX
+TJSETIA.KL,TJSETIA,MYX:TJSETIA,MYX,TJSETIA,TJSETIA.KL,Tuju Setia Bhd.,Industrial Services,stock,common,MYX
+MILOLO.KL,MILOLO,MYX:MILOLO,MYX,MILOLO,MILOLO.KL,Milolo Berhad,Commercial Services,stock,common,MYX
+UNIWALL.KL,UNIWALL,MYX:UNIWALL,MYX,UNIWALL,UNIWALL.KL,Uni Wall Aps Holdings Bhd,Distribution Services,stock,common,MYX
+TPC.KL,TPC,MYX:TPC,MYX,TPC,TPC.KL,TPC Plus Bhd.,Consumer Non-Durables,stock,common,MYX
+KIALIM.KL,KIALIM,MYX:KIALIM,MYX,KIALIM,KIALIM.KL,Kia Lim Bhd.,Non-Energy Minerals,stock,common,MYX
+KHIND.KL,KHIND,MYX:KHIND,MYX,KHIND,KHIND.KL,Khind Holdings Bhd.,Consumer Durables,stock,common,MYX
+0469.KL,0469,MYX:0469,MYX,0469,0469.KL,GTA HOLDINGS BERHAD,Transportation,stock,common,MYX
+MSNIAGA.KL,MSNIAGA,MYX:MSNIAGA,MYX,MSNIAGA,MSNIAGA.KL,Mesiniaga Bhd.,Technology Services,stock,common,MYX
+ZENTECH.KL,ZENTECH,MYX:ZENTECH,MYX,ZENTECH,ZENTECH.KL,Zen Tech International Bhd,Producer Manufacturing,stock,common,MYX
+SANCY.KL,SANCY,MYX:SANCY,MYX,SANCY,SANCY.KL,Sancy Bhd,Technology Services,stock,common,MYX
+BIMOFFICE.KL,BIMOFFICE,MYX:BIMOFFICE,MYX,BIMOFFICE,BIMOFFICE.KL,BIMOffice Group Bhd.,Technology Services,stock,common,MYX
+NOESIS.KL,NOESIS,MYX:NOESIS,MYX,NOESIS,NOESIS.KL,Noesis Exed Berhad,Commercial Services,stock,common,MYX
+S&FCAP.KL,S&FCAP,MYX:S&FCAP,MYX,S&FCAP,S&FCAP.KL,S & F Capital Bhd.,Non-Energy Minerals,stock,common,MYX
+AMTEL.KL,AMTEL,MYX:AMTEL,MYX,AMTEL,AMTEL.KL,Amtel Holdings Bhd.,Technology Services,stock,common,MYX
+SMTRACK.KL,SMTRACK,MYX:SMTRACK,MYX,SMTRACK,SMTRACK.KL,SMTrack Bhd.,Electronic Technology,stock,common,MYX
+TURBO.KL,TURBO,MYX:TURBO,MYX,TURBO,TURBO.KL,Turbo-Mech Bhd.,Distribution Services,stock,common,MYX
+LEESK.KL,LEESK,MYX:LEESK,MYX,LEESK,LEESK.KL,Lee Swee Kiat Group Bhd.,Non-Energy Minerals,stock,common,MYX
+CHGP.KL,CHGP,MYX:CHGP,MYX,CHGP,CHGP.KL,Chin Hin Group Property Bhd.,Consumer Durables,stock,common,MYX
+FLEXI.KL,FLEXI,MYX:FLEXI,MYX,FLEXI,FLEXI.KL,Flexidynamic Holdings Bhd,Producer Manufacturing,stock,common,MYX
+GREENTEC.KL,GREENTEC,MYX:GREENTEC,MYX,GREENTEC,GREENTEC.KL,Greentronics Technology Berhad,Industrial Services,stock,common,MYX
+TPTEC.KL,TPTEC,MYX:TPTEC,MYX,TPTEC,TPTEC.KL,TP Tec Holding Bhd.,Distribution Services,stock,common,MYX
+BABA.KL,BABA,MYX:BABA,MYX,BABA,BABA.KL,Baba Eco Group Bhd,Producer Manufacturing,stock,common,MYX
+NP.KL,NP,MYX:NP,MYX,NP,NP.KL,Novelplus Technology Bhd,Technology Services,stock,common,MYX
+AYER.KL,AYER,MYX:AYER,MYX,AYER,AYER.KL,AYER Holdings Bhd,Finance,stock,common,MYX
+CETECH.KL,CETECH,MYX:CETECH,MYX,CETECH,CETECH.KL,CE Technology Bhd.,Producer Manufacturing,stock,common,MYX
+EUROSP.KL,EUROSP,MYX:EUROSP,MYX,EUROSP,EUROSP.KL,Eurospan Holdings Bhd.,Consumer Durables,stock,common,MYX
+OMAI.KL,OMAI,MYX:OMAI,MYX,OMAI,OMAI.KL,Openmove AI Berhad,Technology Services,stock,common,MYX
+ETA.KL,ETA,MYX:ETA,MYX,ETA,ETA.KL,ETA Group Berhad,Consumer Non-Durables,stock,common,MYX
+KEN.KL,KEN,MYX:KEN,MYX,KEN,KEN.KL,Ken Holdings Bhd.,Industrial Services,stock,common,MYX
+SIGN.KL,SIGN,MYX:SIGN,MYX,SIGN,SIGN.KL,Signature International Bhd.,Miscellaneous,stock,common,MYX
+JAGAAPP.KL,JAGAAPP,MYX:JAGAAPP,MYX,JAGAAPP,JAGAAPP.KL,Jagasolution Berhad,Technology Services,stock,common,MYX
+SMISCOR.KL,SMISCOR,MYX:SMISCOR,MYX,SMISCOR,SMISCOR.KL,SMIS Corp. Bhd.,Producer Manufacturing,stock,common,MYX
+WATTA.KL,WATTA,MYX:WATTA,MYX,WATTA,WATTA.KL,Watta Holding Bhd.,Distribution Services,stock,common,MYX
+EIB.KL,EIB,MYX:EIB,MYX,EIB,EIB.KL,Ecoscience International Bhd.,Industrial Services,stock,common,MYX
+MELATI.KL,MELATI,MYX:MELATI,MYX,MELATI,MELATI.KL,Melati Ehsan Holdings Bhd.,Industrial Services,stock,common,MYX
 PINEAPP.KL,PINEAPP,MYX:PINEAPP,MYX,PINEAPP,PINEAPP.KL,Pineapple Resources Bhd.,Distribution Services,stock,common,MYX
+MPSOL.KL,MPSOL,MYX:MPSOL,MYX,MPSOL,MPSOL.KL,Matrix Parking Solution Holdings Bhd,Consumer Services,stock,common,MYX
+INNITY.KL,INNITY,MYX:INNITY,MYX,INNITY,INNITY.KL,Innity Corp. Bhd.,Commercial Services,stock,common,MYX
+RGS.KL,RGS,MYX:RGS,MYX,RGS,RGS.KL,Ray Go Solar Holdings Bhd.,Industrial Services,stock,common,MYX
+QUALITY.KL,QUALITY,MYX:QUALITY,MYX,QUALITY,QUALITY.KL,Quality Concrete Holdings Bhd.,Non-Energy Minerals,stock,common,MYX
+GOPENG.KL,GOPENG,MYX:GOPENG,MYX,GOPENG,GOPENG.KL,Gopeng Bhd.,Process Industries,stock,common,MYX
+IQGROUP.KL,IQGROUP,MYX:IQGROUP,MYX,IQGROUP,IQGROUP.KL,IQ Group Holdings Bhd.,Electronic Technology,stock,common,MYX
+MAXIM.KL,MAXIM,MYX:MAXIM,MYX,MAXIM,MAXIM.KL,Maxim Global Bhd.,Non-Energy Minerals,stock,common,MYX
+FARLIM.KL,FARLIM,MYX:FARLIM,MYX,FARLIM,FARLIM.KL,Farlim Group (Malaysia) Bhd.,Finance,stock,common,MYX
+IHB.KL,IHB,MYX:IHB,MYX,IHB,IHB.KL,Infraharta Holdings Bhd.,Consumer Durables,stock,common,MYX
+1TECH.KL,1TECH,MYX:1TECH,MYX,1TECH,1TECH.KL,OneTech Solutions Holdings Bhd.,Technology Services,stock,common,MYX
+PARKWD.KL,PARKWD,MYX:PARKWD,MYX,PARKWD,PARKWD.KL,Parkwood Holdings Bhd.,Finance,stock,common,MYX
+OSKVI.KL,OSKVI,MYX:OSKVI,MYX,OSKVI,OSKVI.KL,OSK Ventures International Bhd.,Miscellaneous,stock,common,MYX
+SBH.KL,SBH,MYX:SBH,MYX,SBH,SBH.KL,SBH Marine Holdings Bhd.,Consumer Non-Durables,stock,common,MYX
+ASTRA.KL,ASTRA,MYX:ASTRA,MYX,ASTRA,ASTRA.KL,Astramina Group Bhd.,Consumer Non-Durables,stock,common,MYX
 GPP.KL,GPP,MYX:GPP,MYX,GPP,GPP.KL,GPP Resources Bhd.,Process Industries,stock,common,MYX
+ASIABRN.KL,ASIABRN,MYX:ASIABRN,MYX,ASIABRN,ASIABRN.KL,Asia Brands Bhd.,Distribution Services,stock,common,MYX
+CROESUS.KL,CROESUS,MYX:CROESUS,MYX,CROESUS,CROESUS.KL,Croesus IT Holdings Berhad,Technology Services,stock,common,MYX
+BRIGHT.KL,BRIGHT,MYX:BRIGHT,MYX,BRIGHT,BRIGHT.KL,Bright Packaging Industry Bhd.,Process Industries,stock,common,MYX
+ETH.KL,ETH,MYX:ETH,MYX,ETH,ETH.KL,EquitiesTracker Holdings Bhd.,Technology Services,stock,common,MYX
+DAY3.KL,DAY3,MYX:DAY3,MYX,DAY3,DAY3.KL,Daythree Digital Bhd,Commercial Services,stock,common,MYX
+CLOUD.KL,CLOUD,MYX:CLOUD,MYX,CLOUD,CLOUD.KL,Cloudaron Group Bhd.,Technology Services,stock,common,MYX
