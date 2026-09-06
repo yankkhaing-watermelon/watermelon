@@ -103,8 +103,14 @@ def _liquidity_rank(prices):
     return [s for _, s in scored[:MAX_SYMBOLS]]
 
 
-def _run(prices, metadata):
-    # Enrich once per symbol; the old checks read this exact frame.
+def prepare(prices):
+    """Enrich, attach cross-sectional columns, and derive the scan calendar.
+
+    Extracted so ``null_model.py`` can build its random entries on exactly the
+    same frames, dates and split as the real run. A null model computed over a
+    different universe or calendar is not a null model, it is a second
+    experiment, so this must stay the single source of both.
+    """
     enriched = {}
     for sym, raw in prices.items():
         try:
@@ -129,6 +135,31 @@ def _run(prices, metadata):
     if not scan_dates:
         raise RuntimeError("insufficient history for a backtest window")
     split_date = scan_dates[max(0, int(len(scan_dates) * SPLIT) - 1)]
+    return enriched, scan_dates, split_date
+
+
+def entry_at(frame, as_of):
+    """Resolve a signal bar into a tradeable entry, or None if not tradeable.
+
+    Shared with the null model so a random entry is subject to the identical
+    "must have history, must have a next bar, must have a sane open" filter the
+    real signals pass through.
+    """
+    pos = frame.index.get_indexer([as_of])
+    i = int(pos[0])
+    if i < MIN_HISTORY - 1:
+        return None
+    future = frame.iloc[i + 1:]
+    if len(future) < 2:
+        return None
+    entry_price = float(future["open"].iloc[0])
+    if not math.isfinite(entry_price) or entry_price <= 0:
+        return None
+    return i, future, future.index[0], entry_price
+
+
+def _run(prices, metadata):
+    enriched, scan_dates, split_date = prepare(prices)
 
     strat_params = {s: config.STRATEGIES[s] for s in STRATEGIES if s in config.STRATEGIES}
     commission = COMMISSION_PCT * 2.0
@@ -138,17 +169,10 @@ def _run(prices, metadata):
 
     for as_of in scan_dates:
         for sym, e in enriched.items():
-            pos = e.index.get_indexer([as_of])
-            i = int(pos[0])
-            if i < MIN_HISTORY - 1:
+            resolved = entry_at(e, as_of)
+            if resolved is None:
                 continue
-            future = e.iloc[i + 1:]
-            if len(future) < 2:
-                continue
-            entry_date = future.index[0]
-            entry_price = float(future["open"].iloc[0])
-            if not math.isfinite(entry_price) or entry_price <= 0:
-                continue
+            i, future, entry_date, entry_price = resolved
             for strategy, params in strat_params.items():
                 check = screener.CHECKS.get(strategy)
                 if check is None:
