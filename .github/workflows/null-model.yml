@@ -1,0 +1,73 @@
+name: Null Model
+
+# Benchmarks every strategy against random entries run through the identical
+# exit policies. Diagnostic, not a publisher: nothing is written to the Worker
+# and nothing is committed. The report comes back as a downloadable artifact on
+# the run page.
+#
+# Manual only, by design. There is no schedule — this answers a question once
+# rather than tracking something weekly, and it is heavier than the backtest.
+on:
+  workflow_dispatch:
+    inputs:
+      iters:
+        description: "Random books per strategy per policy. 50 to time it, 200 for a real answer."
+        required: false
+        default: "200"
+      seed:
+        description: "RNG seed. Change it to confirm a result is not one lucky draw."
+        required: false
+        default: "1"
+
+permissions:
+  contents: read              # read-only: this workflow publishes nothing
+
+concurrency:
+  group: null-model
+  cancel-in-progress: false
+
+jobs:
+  null-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350       # 200 iterations x 6 strategies x 2 policies is slow
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run null model
+        env:
+          MARKET: ${{ vars.MARKET || 'MYX' }}
+          TV_MAX_WORKERS: ${{ vars.TV_MAX_WORKERS || '5' }}
+          TV_BARS: ${{ vars.TV_BARS || '500' }}
+          TV_CONNECT_GAP: ${{ vars.TV_CONNECT_GAP || '0.25' }}
+          TV_USERNAME: ${{ secrets.TV_USERNAME }}
+          TV_PASSWORD: ${{ secrets.TV_PASSWORD }}
+          # Mirrors app-review.yml so the null is measured over the same window
+          # and split as the backtest it is benchmarking. Changing one without
+          # the other makes the comparison meaningless.
+          BT_MAX_SYMBOLS: ${{ vars.BT_MAX_SYMBOLS || '300' }}
+          BT_STEP_DAYS: ${{ vars.BT_STEP_DAYS || '5' }}
+          BT_LOOKBACK_YEARS: ${{ vars.BT_LOOKBACK_YEARS || '1.6' }}
+          BT_SPLIT: ${{ vars.BT_SPLIT || '0.70' }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          python -u null_model.py \
+            --iters "${{ inputs.iters }}" \
+            --seed "${{ inputs.seed }}" \
+            --out null_model.json
+
+      - name: Upload report
+        if: always()           # keep partial output when the run times out
+        uses: actions/upload-artifact@v4
+        with:
+          name: null-model-${{ github.run_number }}
+          path: null_model.json
+          if-no-files-found: warn
+          retention-days: 30
