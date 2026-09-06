@@ -116,6 +116,23 @@ CHARTS = {
 }
 
 # ----------------------------------------------------------------------
+# CROSS-SECTIONAL LAYER  (relative.py)
+# ----------------------------------------------------------------------
+# Supplies the two columns no per-symbol rule can compute for itself. Both
+# degrade gracefully: with `enabled` False the screeners behave exactly as
+# they did before, falling back to their absolute proxies.
+RELATIVE = {
+    "enabled": True,
+    "rs_lookback": 126,              # ~6 months, the leg ranked cross-sectionally
+    "rs_min_names": 20,              # below this, leave the date unranked
+
+    # Market gate. Breadth = share of the universe above its own long MA.
+    "regime_ma_column": "ema200",
+    "regime_min_breadth_pct": 45.0,  # below this, long-only screens go quiet
+    "regime_smooth_bars": 5,         # trailing mean, stops the gate flickering
+}
+
+# ----------------------------------------------------------------------
 # STRATEGY PARAMETERS  (used by both screener AND backtester)
 # ----------------------------------------------------------------------
 # Every key here is read by screener.py. `enabled` controls only the LIVE
@@ -125,6 +142,8 @@ STRATEGIES = {
     # 1) Established trend, still healthy
     "trending": {
         "enabled": True,
+        "require_market_regime": True,   # stand down when breadth is weak
+        "rs_rank_min": 60,               # bottom 60% of the market is not a leader
         "adx_min": 25,              # trend strength
         "rsi_min": 50,
         "rsi_max": 75,              # avoid chasing overbought
@@ -135,6 +154,8 @@ STRATEGIES = {
     # 2) Trend just starting — EMA20 crossed above EMA50 recently
     "early_uptrend": {
         "enabled": True,
+        "require_market_regime": True,
+        "rs_rank_min": 50,               # a fresh cross needs only middling RS
         "cross_lookback": 5,        # cross happened within last N bars
         "require_above_ema200": True,
         "volume_ratio_min": 1.2,    # vol vs 20d average
@@ -145,6 +166,8 @@ STRATEGIES = {
     # 3) Reversal: weak momentum -> strong momentum
     "reversal": {
         "enabled": True,
+        "require_market_regime": False,  # counter-trend by design; gate would gut it
+        "rs_rank_min": None,             # a reversal candidate is weak by definition
         "rsi_was_below": 35,        # was oversold/weak within lookback
         "rsi_lookback": 15,
         "rsi_now_above": 50,        # momentum has flipped
@@ -157,6 +180,8 @@ STRATEGIES = {
     # 4) Stock starting to gain momentum (volume + price acceleration)
     "gaining_momentum": {
         "enabled": True,
+        "require_market_regime": True,
+        "rs_rank_min": 60,
         "volume_ratio_min": 1.8,    # today's vol vs 20d average
         "roc_period": 10,
         "roc_min": 3.0,             # % rate of change
@@ -169,6 +194,8 @@ STRATEGIES = {
     #    and also why it behaves differently in a falling market.
     "base_breakout": {
         "enabled": True,            # live in the scan and in Telegram alerts
+        "require_market_regime": True,
+        "rs_rank_min": None,             # bases form in laggards; RS comes after
         "range_lookback": 60,       # bars used to define the base
         "range_position_max": 0.35, # the base must sit in the lower 35% of it
         "base_bars": 20,            # length of the quiet stretch
@@ -188,6 +215,8 @@ STRATEGIES = {
     #    base_breakout, so the two can never fire on the same bar.
     "meta_leader": {
         "enabled": True,                 # live in the scan and in Telegram alerts
+
+        "require_market_regime": True,
 
         "min_history": 252,              # needs a full year of bars
         "min_price": 0.15,

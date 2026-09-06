@@ -7,10 +7,37 @@ rules and live rules cannot drift apart.
 
 import pandas as pd
 import config
+import relative
 from indicators import enrich
 
 
 # ---------------------------------------------------------------- helpers
+def _context_ok(df: pd.DataFrame, i: int, p: dict) -> bool:
+    """Cross-sectional gates, shared by every strategy.
+
+    Both degrade to True when ``relative.py`` has not run, so a caller that
+    skips the pre-pass gets the old absolute-only behaviour rather than an
+    empty result. That fallback is why each gate checks for its column first.
+
+    ``require_market_regime`` stands the strategy down when market breadth is
+    weak. ``rs_rank_min`` demands the symbol sit in the top slice of the
+    universe by trailing return. Reversal opts out of both by design: a
+    reversal candidate is weak by construction, and gating it on a healthy
+    market removes the case it exists to catch.
+    """
+    if p.get("require_market_regime", False) and "regime_ok" in df.columns:
+        flag = df["regime_ok"].iloc[i]
+        if pd.notna(flag) and not bool(flag):
+            return False
+    floor = p.get("rs_rank_min")
+    if floor is not None and "rs_rank" in df.columns:
+        rs = df["rs_rank"].iloc[i]
+        if pd.notna(rs) and float(rs) < float(floor):
+            return False
+    return True
+
+
+
 def _liquid_enough(df: pd.DataFrame, i: int, min_value: float) -> bool:
     v = df["avg_value"].iloc[i]
     return pd.notna(v) and v >= min_value
@@ -40,6 +67,8 @@ def _close_strength(row: pd.Series) -> float:
 
 # ---------------------------------------------------------------- strategies
 def check_trending(df: pd.DataFrame, i: int, p: dict) -> bool:
+    if not _context_ok(df, i, p):
+        return False
     row = df.iloc[i]
     if pd.isna(row["ema200"]) or pd.isna(row["adx"]):
         return False
@@ -56,6 +85,8 @@ def check_trending(df: pd.DataFrame, i: int, p: dict) -> bool:
 
 
 def check_early_uptrend(df: pd.DataFrame, i: int, p: dict) -> bool:
+    if not _context_ok(df, i, p):
+        return False
     row = df.iloc[i]
     if pd.isna(row["ema200"]) or pd.isna(row["vol_ratio"]):
         return False
@@ -75,6 +106,8 @@ def check_early_uptrend(df: pd.DataFrame, i: int, p: dict) -> bool:
 
 
 def check_reversal(df: pd.DataFrame, i: int, p: dict) -> bool:
+    if not _context_ok(df, i, p):
+        return False
     row = df.iloc[i]
     if pd.isna(row["rsi"]) or pd.isna(row["macd"]):
         return False
@@ -98,6 +131,8 @@ def check_reversal(df: pd.DataFrame, i: int, p: dict) -> bool:
 
 
 def check_gaining_momentum(df: pd.DataFrame, i: int, p: dict) -> bool:
+    if not _context_ok(df, i, p):
+        return False
     row = df.iloc[i]
     roc_col = f"roc{p['roc_period']}"
     if pd.isna(row.get(roc_col)) or pd.isna(row["vol_ratio"]):
@@ -127,6 +162,8 @@ def check_base_breakout(df: pd.DataFrame, i: int, p: dict) -> bool:
     contracting volume near the lows is the footprint of accumulation once
     supply has been exhausted.
     """
+    if not _context_ok(df, i, p):
+        return False
     lb = p["range_lookback"]
     base = p["base_bars"]
     if i < lb + base + 1:
@@ -208,6 +245,8 @@ def check_meta_leader(df: pd.DataFrame, i: int, p: dict) -> bool:
     the ATR contraction alone rejects roughly 95% of otherwise-valid bars — so
     it is off by default and should be treated as an experiment, not a setting.
     """
+    if not _context_ok(df, i, p):
+        return False
     min_history = int(p.get("min_history", 252))
     if i < min_history - 1:
         return False
@@ -243,8 +282,7 @@ def check_meta_leader(df: pd.DataFrame, i: int, p: dict) -> bool:
     look_back_window = int(p["recent_window"])
     rs_col = p.get("rs_column", "rs_rank")
     if rs_col in df.columns and pd.notna(row.get(rs_col)):
-        if float(row[rs_col]) < p["rs_rank_min"]:
-            return False
+        pass  # already enforced by _context_ok via rs_rank_min
     else:
         ret_lb = int(p["return_lookback"])
         anchor = i - look_back_window
@@ -354,13 +392,21 @@ def scan(
     strategies = strategies or config.STRATEGIES
     hits: dict[str, list[dict]] = {name: [] for name in strategies}
 
+    # Two passes. Enrich everything first so relative.py can rank symbols
+    # against each other and measure breadth; only then run the checks. A
+    # one-pass loop cannot do this — the cross-sectional columns do not exist
+    # until every symbol has been enriched.
+    enriched: dict[str, pd.DataFrame] = {}
     for symbol, raw in data.items():
         try:
             df = enrich(raw)
         except Exception:
             continue
-        if df.empty:
-            continue
+        if not df.empty:
+            enriched[symbol] = df
+    relative.attach_all(enriched)
+
+    for symbol, df in enriched.items():
         i = len(df) - 1
         for name, params in strategies.items():
             if not params.get("enabled", True):
