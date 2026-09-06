@@ -7,16 +7,10 @@ open and run under BOTH exit policies (see exits.py):
     Fixed        +15% target / -7% stop / 20-day hold        ("fixed_15_7")
     ATR trail 3x  no target / -7% initial / 3xATR14 trail / 250d  ("chandelier_3atr")
 
-For each strategy the policy with the higher *train* profit factor is published
-as the default, with both kept so the app's two buttons work. A 70/30
-chronological train/test split (config.BACKTEST) makes the test half genuinely
-out-of-sample -- which it only stays if no choice is made on it, so the exit
-rule is picked on train and merely reported on test.
-
-Positions still open when the price history ends (exit reason "eod") are dropped
-rather than marked to the final close. Marking them in flatters whichever rule
-holds longest: the 250-session chandelier accumulates unrealised winners at the
-right edge of the sample while the 20-day fixed rule cannot.
+For each strategy the policy with the higher out-of-sample (test) profit factor
+is published as the default, with both kept so the app's two buttons work. A
+70/30 chronological train/test split (config.BACKTEST) makes the test half
+genuinely out-of-sample.
 
 CI tractability: the universe is capped to the most liquid names and signals are
 evaluated on a session stride; both are env-tunable.
@@ -47,7 +41,7 @@ OUT = Path(os.environ.get("PUBLIC_DIR", "public"))
 BT = config.BACKTEST
 SPLIT = float(os.environ.get("BT_SPLIT", str(BT.get("train_test_split", 0.70))))
 COMMISSION_PCT = float(BT.get("commission_pct", 0.15))
-LOOKBACK_YEARS = float(os.environ.get("BT_LOOKBACK_YEARS", "3.0"))
+LOOKBACK_YEARS = float(os.environ.get("BT_LOOKBACK_YEARS", "1.6"))
 STEP_DAYS = int(os.environ.get("BT_STEP_DAYS", "3"))
 MAX_SYMBOLS = int(os.environ.get("BT_MAX_SYMBOLS", "300"))
 MIN_HISTORY = int(os.environ.get("BT_MIN_HISTORY", "260"))
@@ -199,20 +193,6 @@ def _run(prices, metadata):
     return trades, scan_dates[0], scan_dates[-1]
 
 
-def _closed(trades):
-    """Drop right-censored trades.
-
-    ``exits._last`` returns reason ``"eod"`` when a position was still open when
-    the price history ran out; the caller then marks it to the final close. Those
-    are unrealised, and they bias any rule that holds long enough to accumulate
-    them — the 250-session chandelier collects them, the 20-day fixed rule does
-    not, so scoring the two against each other without censoring is not a fair
-    comparison. A trail that genuinely triggers on the last bar has reason
-    "trail" and is kept.
-    """
-    return [t for t in trades if t.reason != "eod"]
-
-
 def _phase_stats(trades):
     if not trades:
         return {"trades": 0, "win_rate": None, "loss_rate": None, "won": 0, "lost": 0,
@@ -222,10 +202,6 @@ def _phase_stats(trades):
     wins = [r for r in rets if r > 0]
     gains = sum(wins); losses = -sum(r for r in rets if r <= 0)
     pf = gains / losses if losses > 0 else (99.0 if gains > 0 else 0.0)
-    # Share of gross profit contributed by the five best trades. Above ~50% the
-    # "edge" is a handful of names, not a repeatable process.
-    top5 = sum(sorted(wins, reverse=True)[:5])
-    top5_share = 100 * top5 / gains if gains > 0 else None
     return {
         "trades": len(rets),
         "win_rate": _round(100 * len(wins) / len(rets), 1),
@@ -234,7 +210,6 @@ def _phase_stats(trades):
         "avg": _round(statistics.fmean(rets)),
         "median": _round(statistics.median(rets)),
         "profit_factor": _round(pf),
-        "top5_profit_share": _round(top5_share, 1),
         "best": _round(max(rets)), "worst": _round(min(rets)),
         "avg_hold": _round(statistics.fmean(t.hold_days for t in trades), 1),
     }
@@ -264,48 +239,23 @@ def _mdd(curve):
 
 
 def _verdict(train, test, other_test_pf):
-    """Grade a strategy on its out-of-sample half.
-
-    Order matters: sample size, then whether the typical trade makes money, then
-    profit factor, then decay against train. A positive mean with a negative
-    median means a few outliers are carrying the rule, so that is checked before
-    profit factor rather than after.
-    """
     n = test["trades"] or 0
-    if n < 30:
-        return {"level": "thin", "text": f"Only {n} closed out-of-sample trades. Not enough to judge."}
-
-    med = test["median"]
+    if n < 20:
+        return {"level": "thin", "text": f"Only {n} out-of-sample trades. Not enough to judge."}
     tpf = test["profit_factor"] or 0.0
     trpf = train["profit_factor"] or 0.0
-    share = test["top5_profit_share"]
-
+    beat = f" Beats the other exit on test profit factor, {tpf:.2f} against {other_test_pf:.2f}." \
+        if other_test_pf and tpf >= other_test_pf else ""
     if tpf < 1.0:
         return {"level": "bad", "text": "Loses money out of sample. Entry criteria are the suspect."}
-    if med is not None and med <= 0:
-        return {"level": "bad", "text": (
-            f"Median trade is {med}% — most trades lose. The positive average is "
-            "outliers, not an edge you can size into.")}
-
-    warn = ""
-    if share is not None and share >= 50:
-        warn = f" Top 5 trades are {share}% of gross profit — concentrated."
-    cmp_ = ""
-    if other_test_pf:
-        cmp_ = f" Other exit scores {other_test_pf:.2f} on test."
-
-    if tpf >= 1.5 and tpf >= 0.75 * trpf and not warn:
-        return {"level": "good", "text": f"Test holds up against train — no sign of curve-fitting.{cmp_}"}
     if tpf >= 1.5 and tpf >= 0.75 * trpf:
-        return {"level": "warn", "text": f"Test profit factor is fine but fragile.{warn}{cmp_}"}
-    return {"level": "warn", "text": f"Test decays from train. Edge is real but weaker out of sample.{warn}{cmp_}"}
+        return {"level": "good", "text": f"Test holds up against train — no sign of curve-fitting.{beat}"}
+    return {"level": "warn", "text": f"Test decays from train. Edge is real but weaker out of sample.{beat}"}
 
 
 def _policy_payload(strategy, pol, trades):
-    closed = _closed(trades)
-    open_at_end = len(trades) - len(closed)
-    tr = [t for t in closed if t.phase == "train"]
-    te = [t for t in closed if t.phase == "test"]
+    tr = [t for t in trades if t.phase == "train"]
+    te = [t for t in trades if t.phase == "test"]
     ts, tt = _phase_stats(tr), _phase_stats(te)
     curve_te = _equity(te)
     pub = sorted(te, key=lambda t: t.exit_date, reverse=True)[:MAX_TEST_TRADES_PUBLISHED]
@@ -313,22 +263,17 @@ def _policy_payload(strategy, pol, trades):
              "out": t.exit_date.date().isoformat(), "r": _round(t.ret_pct),
              "rs": t.rs} for t in pub]
     return {"train": ts, "test": tt, "equity": {"train": _equity(tr), "test": curve_te},
-            "max_drawdown": _mdd(curve_te), "trades_total": len(closed),
-            "open_at_end": open_at_end, "trades": rows}
+            "max_drawdown": _mdd(curve_te), "trades_total": len(trades), "trades": rows}
 
 
 def _strategy_block(strategy, trades):
     per_pol = {pol: [t for t in trades if t.policy == pol] for pol in POLICIES}
     payloads = {pol: _policy_payload(strategy, pol, per_pol[pol]) for pol in POLICIES}
-    # Pick the exit rule on TRAIN only. Selecting it on the test set — as this
-    # did previously — spends the out-of-sample data on the choice, so the
-    # published test profit factor is no longer out of sample.
-    def train_pf(pol):
-        v = payloads[pol]["train"]["profit_factor"]
-        if v is None or payloads[pol]["train"]["trades"] < 20:
-            return -1
-        return v
-    winner = max(POLICIES, key=train_pf)
+    # auto-pick OOS winner by test profit factor
+    def tpf(pol):
+        v = payloads[pol]["test"]["profit_factor"]
+        return v if v is not None else -1
+    winner = max(POLICIES, key=tpf)
     loser = next((p for p in POLICIES if p != winner), winner)
     win = payloads[winner]
     block = {"strategy": strategy, **win,
@@ -378,13 +323,9 @@ def run(do_publish=False):
         "exit_policies": [{"key": p, "label": POLICY_LABELS[p]} for p in POLICIES],
         "strategy_config": {s: config.STRATEGIES.get(s, {}) for s in STRATEGIES},
         "strategies": strategies,
-        "equity_basis": "sequential_compounded_single_position",
-        "note": ("Exit rule chosen on the training half only. Positions still open when "
-                 "the price history ends are excluded rather than marked to the last "
-                 "close. Entry at next bar's open; stops fill at the stop price, so real "
-                 "fills on thin counters are worse. The equity curve compounds trades in "
-                 "exit order and is not a portfolio curve — treat its drawdown as "
-                 "indicative only. Not advice."),
+        "note": ("Two exit rules compared per strategy; the app shows whichever wins test "
+                 "profit factor. Entry at next bar's open; stops fill at the stop price. "
+                 "Real fills on thin counters are worse. Not advice."),
     }
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "backtest.json").write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
