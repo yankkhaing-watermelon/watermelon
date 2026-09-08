@@ -127,8 +127,22 @@ RELATIVE = {
     "rs_min_names": 20,              # below this, leave the date unranked
 
     # Market gate. Breadth = share of the universe above its own long MA.
+    #
+    # `regime_mode` matters more than any single number here:
+    #   "percentile" — gate opens when breadth beats its own trailing quantile.
+    #                  Self-calibrating, so it cannot silently sit above the
+    #                  universe's normal range and hold every screener shut.
+    #   "fixed"      — uses `regime_min_breadth_pct`. Only pick this after
+    #                  running `python calibrate_regime.py`; a guessed floor on
+    #                  a ~1000-name small-cap market is how the 07 Sep 2026 scan
+    #                  returned zero matches on five of six screeners.
+    #   "off"        — gate never blocks; absolute rules alone decide.
     "regime_ma_column": "ema200",
-    "regime_min_breadth_pct": 45.0,  # below this, long-only screens go quiet
+    "regime_mode": "percentile",
+    "regime_percentile": 35.0,       # breadth must beat its 35th pct of history
+    "regime_lookback_bars": 504,     # ~2 years of sessions for that quantile
+    "regime_min_bars": 120,          # below this, leave the gate undecided (NA)
+    "regime_min_breadth_pct": 45.0,  # fixed mode only — calibrate before use
     "regime_smooth_bars": 5,         # trailing mean, stops the gate flickering
 }
 

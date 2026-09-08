@@ -123,7 +123,8 @@ def run(do_publish: bool = False) -> dict[str, Any]:
         raise RuntimeError(f"Fail closed: only {len(prices)} symbols returned usable history")
 
     by_code = {str(k).replace(".KL", "").upper(): v for k, v in prices.items()}
-    hits = screener.scan(by_code)
+    regime: dict[str, Any] = {}
+    hits = screener.scan(by_code, diag=regime)
 
     metadata = _metadata()
     per_symbol: dict[str, dict[str, Any]] = {}
@@ -189,6 +190,10 @@ def run(do_publish: bool = False) -> dict[str, Any]:
         "ranking_model": rank.MODEL, "sorted_by": "strength_score",
         "strategies": [{"key": s, "label": STRATEGY_LABELS[s],
                         "count": sum(s in row["strategies"] for row in stocks)} for s in STRATEGIES],
+        # Published so a zero-match scan can say why. Without this the app shows
+        # "0 matches" whether the market is weak, the gate is miscalibrated, or
+        # the breadth input is missing entirely — three very different problems.
+        "regime": regime,
         "stocks": stocks,
         "disclaimer": "Absolute-TA candidate screen. Not financial advice.",
     }

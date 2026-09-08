@@ -24,10 +24,16 @@ def _context_ok(df: pd.DataFrame, i: int, p: dict) -> bool:
     universe by trailing return. Reversal opts out of both by design: a
     reversal candidate is weak by construction, and gating it on a healthy
     market removes the case it exists to catch.
+
+    Missing context is not a veto. ``regime_ok`` is nullable boolean and
+    ``rs_rank`` is float: where either is NA the gate abstains and the absolute
+    rules decide alone. Only an explicit False, or an explicit rank below the
+    floor, blocks a candidate. Treating unknown as "no" is what turned a data
+    gap into an empty screen with no visible cause.
     """
     if p.get("require_market_regime", False) and "regime_ok" in df.columns:
         flag = df["regime_ok"].iloc[i]
-        if pd.notna(flag) and not bool(flag):
+        if flag is not pd.NA and pd.notna(flag) and not bool(flag):
             return False
     floor = p.get("rs_rank_min")
     if floor is not None and "rs_rank" in df.columns:
@@ -387,8 +393,14 @@ CHECKS = {
 def scan(
     data: dict[str, pd.DataFrame],
     strategies: dict | None = None,
+    diag: dict | None = None,
 ) -> dict[str, list[dict]]:
-    """Run all enabled strategies on the latest bar of every symbol."""
+    """Run all enabled strategies on the latest bar of every symbol.
+
+    Pass a dict as ``diag`` to receive the cross-sectional diagnostics (breadth,
+    threshold, gate state, RS coverage) for the scanned bar. The return contract
+    is unchanged, so existing callers need no edit.
+    """
     strategies = strategies or config.STRATEGIES
     hits: dict[str, list[dict]] = {name: [] for name in strategies}
 
@@ -405,6 +417,8 @@ def scan(
         if not df.empty:
             enriched[symbol] = df
     relative.attach_all(enriched)
+    if diag is not None:
+        diag.update(relative.LAST_DIAGNOSTICS)
 
     for symbol, df in enriched.items():
         i = len(df) - 1

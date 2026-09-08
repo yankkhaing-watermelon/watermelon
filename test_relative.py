@@ -58,12 +58,12 @@ def test_rs_rank_blank_when_too_few_names():
 
 def test_breadth_gate_opens_and_closes():
     strong = {f"S{k}": _frame([10.0] * 50, ema200=[9.0] * 50) for k in range(20)}
-    relative.attach_regime(strong, min_breadth_pct=45.0, smooth_bars=1)
+    relative.attach_regime(strong, min_breadth_pct=45.0, smooth_bars=1, mode="fixed")
     assert bool(strong["S0"]["regime_ok"].iloc[-1]) is True
     assert strong["S0"]["breadth_pct"].iloc[-1] == 100.0
 
     weak = {f"S{k}": _frame([10.0] * 50, ema200=[11.0] * 50) for k in range(20)}
-    relative.attach_regime(weak, min_breadth_pct=45.0, smooth_bars=1)
+    relative.attach_regime(weak, min_breadth_pct=45.0, smooth_bars=1, mode="fixed")
     assert bool(weak["S0"]["regime_ok"].iloc[-1]) is False
 
 
@@ -98,3 +98,54 @@ def test_attach_all_can_be_disabled():
         assert "rs_rank" not in u["S0"].columns
     finally:
         relative.RS = saved
+
+
+# --- regression tests for the 07 Sep 2026 empty-scan incident ----------------
+def test_missing_breadth_is_na_not_false():
+    """A gap in the breadth input must not read as a risk-off market.
+
+    This is the regression that emptied five of six screeners: NaN >= 45.0 is
+    False in a plain bool Series, so an unknown market looked like a bad one.
+    """
+    u = _universe(n_symbols=5, n_bars=30)
+    for frame in u.values():
+        frame["ema200"] = np.nan          # MA unavailable -> breadth undefined
+    relative.attach_regime(u, mode="fixed", min_breadth_pct=45.0, smooth_bars=1)
+    flag = u["S0"]["regime_ok"].iloc[-1]
+    assert pd.isna(flag), "unknown breadth must stay NA"
+
+
+def test_gate_abstains_when_regime_unknown():
+    df = _frame([10.0] * 30)
+    df["regime_ok"] = pd.Series(pd.NA, index=df.index, dtype="boolean")
+    assert screener._context_ok(df, 29, {"require_market_regime": True}) is True
+
+
+def test_percentile_mode_cannot_gate_shut_forever():
+    """Self-calibrating threshold: the gate must open some of the time."""
+    rng = np.random.default_rng(3)
+    n = 400
+    u = {}
+    for k in range(25):
+        closes = list(10 + np.cumsum(rng.normal(0, 0.1, n)))
+        u[f"S{k}"] = _frame(closes, ema200=list(np.full(n, 10.0)))
+    relative.attach_regime(u, mode="percentile", percentile=35.0,
+                           lookback=200, min_bars=60, smooth_bars=1)
+    ok = u["S0"]["regime_ok"].dropna()
+    assert len(ok) > 0
+    share_open = float(ok.astype(bool).mean())
+    assert 0.3 < share_open < 0.95, share_open
+
+
+def test_early_bars_are_undecided_in_percentile_mode():
+    u = _universe(n_symbols=25, n_bars=200)
+    relative.attach_regime(u, mode="percentile", min_bars=120, smooth_bars=1)
+    assert pd.isna(u["S0"]["regime_ok"].iloc[0])
+
+
+def test_diagnostics_are_published():
+    u = _universe(n_symbols=25, n_bars=200)
+    relative.attach_all(u)
+    d = relative.LAST_DIAGNOSTICS
+    for key in ("mode", "breadth_pct", "regime_ok", "universe_symbols"):
+        assert key in d, key

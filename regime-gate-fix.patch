@@ -1,0 +1,358 @@
+diff --git a/config.py b/config.py
+index 14bf8e4..334419f 100644
+--- a/config.py
++++ b/config.py
+@@ -127,8 +127,22 @@ RELATIVE = {
+     "rs_min_names": 20,              # below this, leave the date unranked
+ 
+     # Market gate. Breadth = share of the universe above its own long MA.
++    #
++    # `regime_mode` matters more than any single number here:
++    #   "percentile" — gate opens when breadth beats its own trailing quantile.
++    #                  Self-calibrating, so it cannot silently sit above the
++    #                  universe's normal range and hold every screener shut.
++    #   "fixed"      — uses `regime_min_breadth_pct`. Only pick this after
++    #                  running `python calibrate_regime.py`; a guessed floor on
++    #                  a ~1000-name small-cap market is how the 07 Sep 2026 scan
++    #                  returned zero matches on five of six screeners.
++    #   "off"        — gate never blocks; absolute rules alone decide.
+     "regime_ma_column": "ema200",
+-    "regime_min_breadth_pct": 45.0,  # below this, long-only screens go quiet
++    "regime_mode": "percentile",
++    "regime_percentile": 35.0,       # breadth must beat its 35th pct of history
++    "regime_lookback_bars": 504,     # ~2 years of sessions for that quantile
++    "regime_min_bars": 120,          # below this, leave the gate undecided (NA)
++    "regime_min_breadth_pct": 45.0,  # fixed mode only — calibrate before use
+     "regime_smooth_bars": 5,         # trailing mean, stops the gate flickering
+ }
+ 
+diff --git a/export_scan.py b/export_scan.py
+index 76955c2..4d20aa8 100644
+--- a/export_scan.py
++++ b/export_scan.py
+@@ -123,7 +123,8 @@ def run(do_publish: bool = False) -> dict[str, Any]:
+         raise RuntimeError(f"Fail closed: only {len(prices)} symbols returned usable history")
+ 
+     by_code = {str(k).replace(".KL", "").upper(): v for k, v in prices.items()}
+-    hits = screener.scan(by_code)
++    regime: dict[str, Any] = {}
++    hits = screener.scan(by_code, diag=regime)
+ 
+     metadata = _metadata()
+     per_symbol: dict[str, dict[str, Any]] = {}
+@@ -189,6 +190,10 @@ def run(do_publish: bool = False) -> dict[str, Any]:
+         "ranking_model": rank.MODEL, "sorted_by": "strength_score",
+         "strategies": [{"key": s, "label": STRATEGY_LABELS[s],
+                         "count": sum(s in row["strategies"] for row in stocks)} for s in STRATEGIES],
++        # Published so a zero-match scan can say why. Without this the app shows
++        # "0 matches" whether the market is weak, the gate is miscalibrated, or
++        # the breadth input is missing entirely — three very different problems.
++        "regime": regime,
+         "stocks": stocks,
+         "disclaimer": "Absolute-TA candidate screen. Not financial advice.",
+     }
+diff --git a/relative.py b/relative.py
+index 85f8cd9..15d4ddc 100644
+--- a/relative.py
++++ b/relative.py
+@@ -6,21 +6,34 @@ same time — an absolute rule cannot tell "this stock is strong" from "everythi
+ is strong". This module adds the two columns that supply the missing context:
+ 
+ ``rs_rank``     cross-sectional percentile (0-100) of trailing return, computed
+-                per date across whatever symbols have data on that date. This is
+-                the column ``config.STRATEGIES["meta_leader"]["rs_column"]``
+-                already names and that nothing previously produced, so the
+-                leadership gate silently fell through to an absolute proxy.
+-
+-``regime_ok``   a boolean market gate. Breadth — the share of the universe
+-                holding above its own long moving average — is used rather than
+-                an index level, so no extra data source is needed and the gate
+-                cannot be skewed by a handful of heavyweight constituents.
++                per date across whatever symbols have data on that date.
++
++``regime_ok``   a nullable boolean market gate. Breadth — the share of the
++                universe holding above its own long moving average — is used
++                rather than an index level, so no extra data source is needed
++                and the gate cannot be skewed by a few heavyweight constituents.
+                 ``breadth_pct`` is written alongside it for inspection.
+ 
+ Both are strictly point-in-time. A percentile on date D ranks only values known
+-on date D, and breadth is smoothed with a trailing mean, so no future bar can
+-influence an earlier signal. Both attach to the same enriched frames the
+-screener reads, in one pre-pass, so the live scan and the backtest cannot drift.
++on date D, and the breadth threshold in percentile mode is a *trailing* quantile
++of breadth's own history, so no future bar can influence an earlier signal.
++
++Two failure modes, learned the hard way
++---------------------------------------
++1. **Missing must not mean "no".** ``breadth >= threshold`` on a NaN breadth
++   returns ``False`` in a plain bool Series, which is indistinguishable from a
++   genuine risk-off reading and silently empties every gated screener. The gate
++   is therefore built on pandas' nullable ``boolean`` dtype: unknown stays
++   ``pd.NA``, and ``screener._context_ok`` treats ``NA`` as "no opinion" and
++   lets the absolute rules decide.
++
++2. **A hardcoded threshold is a guess.** A fixed 45% breadth floor was never
++   checked against this universe's actual distribution; on a market of ~1000
++   mostly small-cap counters it can sit above the median and hold the gate shut
++   more or less permanently. The default mode is now ``percentile``: the gate
++   opens when breadth is above its own trailing quantile, so it adapts to the
++   universe instead of encoding an assumption about it. Use
++   ``calibrate_regime.py`` before choosing ``fixed``.
+ 
+ Survivorship caveat: breadth is measured across the universe as it is fetched
+ today, so it slightly overstates historical health. It is a coarse on/off gate,
+@@ -38,6 +51,14 @@ RS_MIN_NAMES = int(RS.get("rs_min_names", 20))
+ REGIME_MA = str(RS.get("regime_ma_column", "ema200"))
+ REGIME_MIN_BREADTH = float(RS.get("regime_min_breadth_pct", 45.0))
+ REGIME_SMOOTH = int(RS.get("regime_smooth_bars", 5))
++REGIME_MODE = str(RS.get("regime_mode", "percentile"))
++REGIME_PERCENTILE = float(RS.get("regime_percentile", 35.0))
++REGIME_LOOKBACK = int(RS.get("regime_lookback_bars", 504))
++REGIME_MIN_BARS = int(RS.get("regime_min_bars", 120))
++
++# Filled by ``attach_all`` so the exporter can publish why a scan came back
++# empty. An empty screen with no explanation is the bug that hid the bug.
++LAST_DIAGNOSTICS: dict = {}
+ 
+ 
+ def _wide(enriched: dict[str, pd.DataFrame], column: str) -> pd.DataFrame:
+@@ -74,36 +95,107 @@ def attach_rs_rank(enriched: dict[str, pd.DataFrame],
+             frame["rs_rank"] = ranked[symbol].reindex(frame.index)
+ 
+ 
+-def attach_regime(enriched: dict[str, pd.DataFrame],
+-                  ma_column: str = REGIME_MA,
+-                  min_breadth_pct: float = REGIME_MIN_BREADTH,
+-                  smooth_bars: int = REGIME_SMOOTH) -> None:
+-    """Write ``breadth_pct`` and ``regime_ok`` into each frame in place.
++def breadth_series(enriched: dict[str, pd.DataFrame],
++                   ma_column: str = REGIME_MA,
++                   smooth_bars: int = REGIME_SMOOTH) -> pd.Series:
++    """Share of reporting symbols closing above ``ma_column``, 0-100.
+ 
+-    Breadth is the share of reporting symbols closing above ``ma_column``. It is
+-    smoothed with a trailing mean so the gate does not flicker on and off around
+-    the threshold, which would otherwise churn signals for no economic reason.
++    Smoothed with a trailing mean so the gate does not flicker on and off around
++    the threshold, which would churn signals for no economic reason. Exposed
++    separately so ``calibrate_regime.py`` can study the distribution without
++    running a scan.
+     """
+     closes = _wide(enriched, "close")
+     mas = _wide(enriched, ma_column)
+     if closes.empty or mas.empty:
+-        return
++        return pd.Series(dtype="float64")
+     mas = mas.reindex(index=closes.index, columns=closes.columns)
+     above = (closes > mas).where(closes.notna() & mas.notna())
+     reporting = above.notna().sum(axis=1)
+     breadth = 100.0 * above.sum(axis=1) / reporting.where(reporting > 0)
+     if smooth_bars > 1:
+         breadth = breadth.rolling(smooth_bars, min_periods=1).mean()
+-    ok = breadth >= min_breadth_pct
++    return breadth
++
++
++def regime_threshold(breadth: pd.Series,
++                     mode: str = REGIME_MODE,
++                     min_breadth_pct: float = REGIME_MIN_BREADTH,
++                     percentile: float = REGIME_PERCENTILE,
++                     lookback: int = REGIME_LOOKBACK,
++                     min_bars: int = REGIME_MIN_BARS) -> pd.Series:
++    """The bar breadth must clear on each date.
++
++    ``fixed``       a constant; calibrate it first with ``calibrate_regime.py``.
++    ``percentile``  a trailing quantile of breadth's own history — self-
++                    calibrating, and NaN until ``min_bars`` of history exist so
++                    early dates are left undecided rather than gated shut.
++    ``off``         no threshold; the gate never blocks.
++    """
++    if breadth.empty or mode == "off":
++        return pd.Series(float("nan"), index=breadth.index, dtype="float64")
++    if mode == "percentile":
++        return breadth.rolling(lookback, min_periods=min_bars).quantile(
++            max(0.0, min(1.0, percentile / 100.0)))
++    return pd.Series(float(min_breadth_pct), index=breadth.index, dtype="float64")
++
++
++def attach_regime(enriched: dict[str, pd.DataFrame],
++                  ma_column: str = REGIME_MA,
++                  min_breadth_pct: float = REGIME_MIN_BREADTH,
++                  smooth_bars: int = REGIME_SMOOTH,
++                  mode: str = REGIME_MODE,
++                  percentile: float = REGIME_PERCENTILE,
++                  lookback: int = REGIME_LOOKBACK,
++                  min_bars: int = REGIME_MIN_BARS) -> None:
++    """Write ``breadth_pct``, ``regime_threshold`` and ``regime_ok`` in place.
++
++    ``regime_ok`` is nullable boolean. Where breadth or its threshold cannot be
++    computed the value is ``pd.NA``, not ``False``: the screener then falls back
++    to its absolute rules instead of standing the whole book down on missing
++    data.
++    """
++    breadth = breadth_series(enriched, ma_column, smooth_bars)
++    if breadth.empty:
++        return
++    thr = regime_threshold(breadth, mode, min_breadth_pct, percentile,
++                           lookback, min_bars)
++
++    ok = pd.Series(pd.NA, index=breadth.index, dtype="boolean")
++    decided = breadth.notna() & thr.notna()
++    if bool(decided.any()):
++        ok[decided] = (breadth[decided] >= thr[decided]).astype("boolean")
++
+     for frame in enriched.values():
+         frame["breadth_pct"] = breadth.reindex(frame.index)
++        frame["regime_threshold"] = thr.reindex(frame.index)
+         frame["regime_ok"] = ok.reindex(frame.index)
+ 
++    last = breadth.index.max()
++    LAST_DIAGNOSTICS.update({
++        "mode": mode,
++        "as_of": str(getattr(last, "date", lambda: last)()),
++        "breadth_pct": None if pd.isna(breadth.loc[last]) else round(float(breadth.loc[last]), 2),
++        "threshold_pct": None if pd.isna(thr.loc[last]) else round(float(thr.loc[last]), 2),
++        "regime_ok": None if pd.isna(ok.loc[last]) else bool(ok.loc[last]),
++        "decided_bars": int(decided.sum()),
++        "ma_column": ma_column,
++        "smooth_bars": smooth_bars,
++    })
++
+ 
+ def attach_all(enriched: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+     """Run both pre-passes. Returns the same dict for call-site convenience."""
++    LAST_DIAGNOSTICS.clear()
+     if not RS.get("enabled", True):
++        LAST_DIAGNOSTICS.update({"mode": "disabled", "regime_ok": None})
+         return enriched
+     attach_rs_rank(enriched)
+     attach_regime(enriched)
++
++    ranked = sum(1 for f in enriched.values()
++                 if "rs_rank" in f.columns and not f.empty
++                 and pd.notna(f["rs_rank"].iloc[-1]))
++    LAST_DIAGNOSTICS["rs_ranked_symbols"] = ranked
++    LAST_DIAGNOSTICS["universe_symbols"] = len(enriched)
+     return enriched
+diff --git a/screener.py b/screener.py
+index 2095f42..ca4de58 100644
+--- a/screener.py
++++ b/screener.py
+@@ -24,10 +24,16 @@ def _context_ok(df: pd.DataFrame, i: int, p: dict) -> bool:
+     universe by trailing return. Reversal opts out of both by design: a
+     reversal candidate is weak by construction, and gating it on a healthy
+     market removes the case it exists to catch.
++
++    Missing context is not a veto. ``regime_ok`` is nullable boolean and
++    ``rs_rank`` is float: where either is NA the gate abstains and the absolute
++    rules decide alone. Only an explicit False, or an explicit rank below the
++    floor, blocks a candidate. Treating unknown as "no" is what turned a data
++    gap into an empty screen with no visible cause.
+     """
+     if p.get("require_market_regime", False) and "regime_ok" in df.columns:
+         flag = df["regime_ok"].iloc[i]
+-        if pd.notna(flag) and not bool(flag):
++        if flag is not pd.NA and pd.notna(flag) and not bool(flag):
+             return False
+     floor = p.get("rs_rank_min")
+     if floor is not None and "rs_rank" in df.columns:
+@@ -387,8 +393,14 @@ CHECKS = {
+ def scan(
+     data: dict[str, pd.DataFrame],
+     strategies: dict | None = None,
++    diag: dict | None = None,
+ ) -> dict[str, list[dict]]:
+-    """Run all enabled strategies on the latest bar of every symbol."""
++    """Run all enabled strategies on the latest bar of every symbol.
++
++    Pass a dict as ``diag`` to receive the cross-sectional diagnostics (breadth,
++    threshold, gate state, RS coverage) for the scanned bar. The return contract
++    is unchanged, so existing callers need no edit.
++    """
+     strategies = strategies or config.STRATEGIES
+     hits: dict[str, list[dict]] = {name: [] for name in strategies}
+ 
+@@ -405,6 +417,8 @@ def scan(
+         if not df.empty:
+             enriched[symbol] = df
+     relative.attach_all(enriched)
++    if diag is not None:
++        diag.update(relative.LAST_DIAGNOSTICS)
+ 
+     for symbol, df in enriched.items():
+         i = len(df) - 1
+diff --git a/test_relative.py b/test_relative.py
+index 35c79a8..3f411d6 100644
+--- a/test_relative.py
++++ b/test_relative.py
+@@ -58,12 +58,12 @@ def test_rs_rank_blank_when_too_few_names():
+ 
+ def test_breadth_gate_opens_and_closes():
+     strong = {f"S{k}": _frame([10.0] * 50, ema200=[9.0] * 50) for k in range(20)}
+-    relative.attach_regime(strong, min_breadth_pct=45.0, smooth_bars=1)
++    relative.attach_regime(strong, min_breadth_pct=45.0, smooth_bars=1, mode="fixed")
+     assert bool(strong["S0"]["regime_ok"].iloc[-1]) is True
+     assert strong["S0"]["breadth_pct"].iloc[-1] == 100.0
+ 
+     weak = {f"S{k}": _frame([10.0] * 50, ema200=[11.0] * 50) for k in range(20)}
+-    relative.attach_regime(weak, min_breadth_pct=45.0, smooth_bars=1)
++    relative.attach_regime(weak, min_breadth_pct=45.0, smooth_bars=1, mode="fixed")
+     assert bool(weak["S0"]["regime_ok"].iloc[-1]) is False
+ 
+ 
+@@ -98,3 +98,54 @@ def test_attach_all_can_be_disabled():
+         assert "rs_rank" not in u["S0"].columns
+     finally:
+         relative.RS = saved
++
++
++# --- regression tests for the 07 Sep 2026 empty-scan incident ----------------
++def test_missing_breadth_is_na_not_false():
++    """A gap in the breadth input must not read as a risk-off market.
++
++    This is the regression that emptied five of six screeners: NaN >= 45.0 is
++    False in a plain bool Series, so an unknown market looked like a bad one.
++    """
++    u = _universe(n_symbols=5, n_bars=30)
++    for frame in u.values():
++        frame["ema200"] = np.nan          # MA unavailable -> breadth undefined
++    relative.attach_regime(u, mode="fixed", min_breadth_pct=45.0, smooth_bars=1)
++    flag = u["S0"]["regime_ok"].iloc[-1]
++    assert pd.isna(flag), "unknown breadth must stay NA"
++
++
++def test_gate_abstains_when_regime_unknown():
++    df = _frame([10.0] * 30)
++    df["regime_ok"] = pd.Series(pd.NA, index=df.index, dtype="boolean")
++    assert screener._context_ok(df, 29, {"require_market_regime": True}) is True
++
++
++def test_percentile_mode_cannot_gate_shut_forever():
++    """Self-calibrating threshold: the gate must open some of the time."""
++    rng = np.random.default_rng(3)
++    n = 400
++    u = {}
++    for k in range(25):
++        closes = list(10 + np.cumsum(rng.normal(0, 0.1, n)))
++        u[f"S{k}"] = _frame(closes, ema200=list(np.full(n, 10.0)))
++    relative.attach_regime(u, mode="percentile", percentile=35.0,
++                           lookback=200, min_bars=60, smooth_bars=1)
++    ok = u["S0"]["regime_ok"].dropna()
++    assert len(ok) > 0
++    share_open = float(ok.astype(bool).mean())
++    assert 0.3 < share_open < 0.95, share_open
++
++
++def test_early_bars_are_undecided_in_percentile_mode():
++    u = _universe(n_symbols=25, n_bars=200)
++    relative.attach_regime(u, mode="percentile", min_bars=120, smooth_bars=1)
++    assert pd.isna(u["S0"]["regime_ok"].iloc[0])
++
++
++def test_diagnostics_are_published():
++    u = _universe(n_symbols=25, n_bars=200)
++    relative.attach_all(u)
++    d = relative.LAST_DIAGNOSTICS
++    for key in ("mode", "breadth_pct", "regime_ok", "universe_symbols"):
++        assert key in d, key
