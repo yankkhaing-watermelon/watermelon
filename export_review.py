@@ -43,7 +43,8 @@ def _profit_factor(returns: list[float]) -> float | None:
     gains = sum(r for r in returns if r > 0)
     losses = -sum(r for r in returns if r < 0)
     if losses == 0:
-        return None if gains == 0 else float("inf")
+        # No losses means the ratio is undefined; JSON cannot represent infinity.
+        return None
     return round(gains / losses, 2)
 
 
@@ -100,7 +101,10 @@ def run(publish: bool = False, send_telegram: bool | None = None) -> dict:
         worst = {"symbol": None, "ret": None}
 
         for _, row in s.iterrows():
-            df = data.get(row["symbol"])
+            symbol = str(row["symbol"]).strip().upper()
+            df = data.get(symbol)
+            if df is None and config.MARKET == "MYX":
+                df = data.get(symbol.removesuffix(".KL") + ".KL")
             fr = forward_returns(row["date"], float(row["close"]), df) if (df is not None and not df.empty) else {}
 
             # Always record the signal for the always-visible list, even when it
@@ -215,7 +219,7 @@ def run(publish: bool = False, send_telegram: bool | None = None) -> dict:
 
 def _write(report: dict, publish: bool):
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "weekly.json").write_text(json.dumps(report, separators=(",", ":")))
+    (OUT / "weekly.json").write_text(json.dumps(report, separators=(",", ":"), allow_nan=False))
     print("wrote public/weekly.json")
     if publish:
         from export_scan import publish_files
