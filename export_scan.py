@@ -138,10 +138,14 @@ def run(do_publish: bool = False) -> dict[str, Any]:
             if sym not in per_symbol:
                 per_symbol[sym] = r
 
-    signals = [{"symbol": s, "strategy": strat_of[s][0], "price": per_symbol[s].get("close"),
-                "score": None} for s in per_symbol]
-    new_count, episodes = update(signals)
-    is_new = {str(e["symbol"]).upper(): bool(e.get("is_new")) for e in episodes}
+    # Weekly evaluates episodes per strategy, so retain every qualifying pair.
+    signals = [{"symbol": s, "strategy": strategy, "price": per_symbol[s].get("close"),
+                "score": None} for s in per_symbol for strategy in strat_of[s]]
+    _, episodes = update(signals)
+    # Keep the app's stock-level NEW badge/count tied to its primary strategy.
+    is_new = {str(e["symbol"]).upper(): bool(e.get("is_new")) for e in episodes
+              if e["strategy"] == strat_of[str(e["symbol"]).upper()][0]}
+    new_count = sum(is_new.values())
 
     stocks: list[dict[str, Any]] = []
     for sym, r in per_symbol.items():
