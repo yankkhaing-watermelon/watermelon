@@ -160,7 +160,8 @@ STRATEGIES = {
         "rs_rank_min": 60,               # bottom 60% of the market is not a leader
         "adx_min": 25,              # trend strength
         "rsi_min": 50,
-        "rsi_max": 75,              # avoid chasing overbought
+        "rsi_max": 100,             # no upper cap: RSI > 75 stays in Trending
+        "overbought_rsi": 75,       # ...but is flagged `overbought` in the app
         "require_ema_stack": True,  # close > EMA20 > EMA50 > EMA200
         "min_avg_value_myr": 1_000_000,  # liquidity filter (price*volume 20d avg)
     },

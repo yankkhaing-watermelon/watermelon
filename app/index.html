@@ -71,6 +71,10 @@ main>section{flex:1 1 auto;min-height:0}
 .badge{display:inline-block;margin-left:5px;padding:1px 5px;border-radius:5px;
   background:var(--accent-bg);color:var(--accent);font-size:9.5px;font-weight:600;
   vertical-align:1px}
+.badge.ob{background:rgba(217,140,20,.16);color:#c07a0a}
+.ob-txt{color:#c07a0a;font-weight:600}
+html[data-theme="dark"] .badge.ob{background:rgba(240,170,60,.16);color:#f0aa3c}
+html[data-theme="dark"] .ob-txt{color:#f0aa3c}
 
 .scroller{max-height:calc(100dvh - 300px);overflow-y:auto;scrollbar-width:none;
   -webkit-overflow-scrolling:touch}

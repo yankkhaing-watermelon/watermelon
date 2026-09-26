@@ -31,6 +31,8 @@ from universe import get_universe
 OUT = Path(os.environ.get("PUBLIC_DIR", "public"))
 DETAIL_BARS = int(os.environ.get("DETAIL_BARS", "130"))
 SPARK_BARS = int(os.environ.get("SPARK_BARS", "20"))
+# RSI above this is kept in the scan but flagged so the app can highlight it.
+OVERBOUGHT_RSI = float(config.STRATEGIES["trending"].get("overbought_rsi", 75))
 
 STRATEGY_LABELS = {
     "trending": "Trending",
@@ -164,6 +166,7 @@ def run(do_publish: bool = False) -> dict[str, Any]:
             "close": _num(r.get("close")),
             "price": _num(r.get("close")),
             "rsi": _num(r.get("rsi"), 1),
+            "overbought": _finite(r.get("rsi")) > OVERBOUGHT_RSI,
             "adx": _num(r.get("adx"), 1),
             "vol_ratio": _num(r.get("vol_ratio"), 2),
             "roc10": _num(r.get("roc10"), 2),

@@ -186,9 +186,9 @@
       <div class="row" data-i="${i}">
         <div class="spark"><canvas id="sp${i}"></canvas></div>
         <div class="row-mid">
-          <p class="name">${esc(s.symbol)}${s.is_new ? '<span class="badge">NEW</span>' : ""}${s.status === "WATCH" ? '<span class="badge">WATCH</span>' : ""}</p>
+          <p class="name">${esc(s.symbol)}${s.is_new ? '<span class="badge">NEW</span>' : ""}${s.status === "WATCH" ? '<span class="badge">WATCH</span>' : ""}${s.overbought ? '<span class="badge ob">OVERBOUGHT</span>' : ""}</p>
           ${s.name ? `<p class="co">${esc(s.name)}</p>` : ""}
-          <p class="sub">Score ${s.score ?? "–"} · RSI ${s.rsi ?? "–"} · ADX ${s.adx ?? "–"} · Vol ${s.vol_ratio ?? "–"}x</p>
+          <p class="sub">Score ${s.score ?? "–"} · <span class="${s.overbought ? "ob-txt" : ""}">RSI ${s.rsi ?? "–"}</span> · ADX ${s.adx ?? "–"} · Vol ${s.vol_ratio ?? "–"}x</p>
         </div>
         <div class="row-end">
           <p class="chg ${dir}">${sign}${s.change_pct}%</p>
@@ -222,7 +222,7 @@
       `<span class="cat">${esc(cat)}</span><span class="sep">|</span>` +
       `<span class="stat">${cur}${s.close ?? s.price}</span>` +
       `<span class="stat">Score ${s.score ?? "–"}</span>` +
-      `<span class="stat">RSI ${s.rsi ?? "–"}</span>` +
+      `<span class="stat${s.overbought ? " ob-txt" : ""}">RSI ${s.rsi ?? "–"}${s.overbought ? " · Overbought" : ""}</span>` +
       `<span class="stat">ADX ${s.adx ?? "–"}</span>` +
       `<span class="stat">Vol ${s.vol_ratio ?? "–"}x</span>`;
     $("d-co").textContent = s.name || "";
