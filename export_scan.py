@@ -24,6 +24,7 @@ import config
 import data_fetcher
 import rank
 import screener
+from ema_near import build_ema_near
 from indicators import enrich
 from signal_log import update
 from universe import get_universe
@@ -31,6 +32,8 @@ from universe import get_universe
 OUT = Path(os.environ.get("PUBLIC_DIR", "public"))
 DETAIL_BARS = int(os.environ.get("DETAIL_BARS", "130"))
 SPARK_BARS = int(os.environ.get("SPARK_BARS", "20"))
+# EMA proximity tab: close within +/- this % of EMA 20 / 50 / 200.
+EMA_BAND_PCT = float(os.environ.get("EMA_BAND_PCT", "3"))
 # RSI above this is kept in the scan but flagged so the app can highlight it.
 OVERBOUGHT_RSI = float(config.STRATEGIES["trending"].get("overbought_rsi", 75))
 
@@ -188,6 +191,10 @@ def run(do_publish: bool = False) -> dict[str, Any]:
                                -_finite(s.get("vol_ratio"))))
 
     history = {s["symbol"]: _series(by_code[s["symbol"]], DETAIL_BARS) for s in stocks}
+
+    # EMA proximity list: whole market, independent of the six strategies.
+    ema_near = build_ema_near(by_code, metadata, band_pct=EMA_BAND_PCT)
+
     now = datetime.now(timezone.utc)
     latest = {
         "generated_at": now.isoformat(), "scan_date": now.astimezone().date().isoformat(),
@@ -202,6 +209,8 @@ def run(do_publish: bool = False) -> dict[str, Any]:
         # the breadth input is missing entirely — three very different problems.
         "regime": regime,
         "stocks": stocks,
+        # Independent EMA 20/50/200 proximity list (PWA "EMA" tab).
+        "ema_near": ema_near,
         "disclaimer": "Absolute-TA candidate screen. Not financial advice.",
     }
     OUT.mkdir(parents=True, exist_ok=True)
@@ -211,7 +220,8 @@ def run(do_publish: bool = False) -> dict[str, Any]:
                    separators=(",", ":")), encoding="utf-8")
     if do_publish:
         _publish_files(("latest", "history"))
-    print(f"Restored engine exported {len(stocks)} hits from {len(prices)} stocks")
+    print(f"Restored engine exported {len(stocks)} hits from {len(prices)} stocks; "
+          f"{ema_near['count']} within ±{EMA_BAND_PCT:g}% of an EMA")
     return latest
 
 
