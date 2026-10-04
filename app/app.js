@@ -29,6 +29,7 @@
   let btStrat = null, btOpen = null;
   const historyCache = {};
   let filter = null, current = null, view = "list";
+  let emaSel = "20";
   let pollTimer = null, resizeTimer = null;
 
   // ------------------------------------------------------------------ theme
@@ -106,6 +107,7 @@
       latest = await get("/latest");
       renderChips();
       renderList();
+      renderEma();
       $("updated").textContent = "Scan date " + (latest.scan_date || new Date(latest.generated_at).toLocaleDateString()) +
         " · Updated " + fmtTime(latest.generated_at);
     } catch (e) {
@@ -523,10 +525,47 @@
   }
   $("tl-close").onclick = closeTrades;
 
+  // -------------------------------------------------------------------- EMA
+  // Independent of the six strategies: latest.ema_near is built from the whole
+  // market scan, then filtered here by the selected EMA period.
+  function renderEma() {
+    const box = latest && latest.ema_near;
+    if (!box) {
+      $("ema-count").textContent = "";
+      $("ema-list").innerHTML = `<p class="empty">No EMA data yet. Run a new scan.</p>`;
+      return;
+    }
+    const k = emaSel, band = box.band_pct ?? 3, cur = latest.currency || "";
+    const rows = (box.stocks || [])
+      .filter((s) => s["d" + k] != null && Math.abs(s["d" + k]) <= band)
+      .sort((a, b) => Math.abs(a["d" + k]) - Math.abs(b["d" + k]));
+
+    $("ema-count").textContent =
+      `${rows.length} stock${rows.length === 1 ? "" : "s"} within ±${band}% of EMA ${k}`;
+
+    $("ema-list").innerHTML = rows.length ? rows.map((s) => {
+      const d = s["d" + k], dir = d >= 0 ? "up" : "down";
+      const day = s.change_pct > 0 ? "+" + s.change_pct : s.change_pct;
+      return `
+      <div class="row" style="cursor:default">
+        <div class="row-mid">
+          <p class="name">${esc(s.symbol)}</p>
+          ${s.name ? `<p class="co">${esc(s.name)}</p>` : ""}
+          <p class="sub">EMA ${k} ${s["ema" + k]} · Day ${day}%</p>
+        </div>
+        <div class="row-end">
+          <p class="chg ${dir}">${d > 0 ? "+" : ""}${d}%</p>
+          <p class="px">${cur} ${s.close}</p>
+        </div>
+      </div>`;
+    }).join("") : `<p class="empty">No stocks within ±${band}% of EMA ${k}.</p>`;
+  }
+  $("ema-select").onchange = (e) => { emaSel = e.target.value; renderEma(); };
+
   // ------------------------------------------------------------------- nav
   function show(v) {
     view = v;
-    ["list", "detail", "weekly", "backtest"].forEach((x) => {
+    ["list", "detail", "weekly", "backtest", "ema"].forEach((x) => {
       $("view-" + x).hidden = x !== v;
     });
     document.querySelectorAll("nav button").forEach((b) => {
@@ -537,6 +576,7 @@
       $("title").textContent =
         v === "weekly" ? "Weekly review"
         : v === "backtest" ? "Backtest"
+        : v === "ema" ? "EMA proximity"
         : "BursaMusangKing";
     }
     window.scrollTo(0, 0);

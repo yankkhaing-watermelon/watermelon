@@ -176,6 +176,11 @@ html[data-theme="dark"] .v-warn{color:#e0a94a}
   font-size:11px;color:var(--muted);line-height:1.7;word-break:break-word}
 .disclaimer{font-size:11px;color:var(--faint);padding:4px 0 18px;line-height:1.55}
 
+/* EMA proximity tab */
+.ema-select{width:100%;margin:0 0 10px;padding:10px 12px;border-radius:var(--radius);
+  border:.5px solid var(--line);background:var(--card);color:var(--text);
+  font:inherit;font-size:14px;font-weight:600}
+
 nav{position:sticky;bottom:0;display:flex;background:var(--card);
   border-top:.5px solid var(--line);
   padding-bottom:env(safe-area-inset-bottom)}
@@ -274,6 +279,17 @@ nav svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;
       <p class="meta" id="bt-updated" style="text-align:center;margin:0 0 10px"></p>
       <p class="disclaimer" id="bt-note"></p>
     </section>
+
+    <!-- ============ EMA proximity view ============ -->
+    <section id="view-ema" hidden>
+      <select id="ema-select" class="ema-select" aria-label="EMA period">
+        <option value="20">EMA 20</option>
+        <option value="50">EMA 50</option>
+        <option value="200">EMA 200</option>
+      </select>
+      <p class="meta" id="ema-count"></p>
+      <div class="scroller" style="max-height:calc(100dvh - 260px)"><div id="ema-list"></div></div>
+    </section>
   </main>
 
   <nav>
@@ -288,6 +304,10 @@ nav svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;
     <button data-view="backtest">
       <svg viewBox="0 0 24 24"><path d="M3 21h18M6 21V10M11 21V4M16 21v-7M21 21v-4"/></svg>
       Backtest
+    </button>
+    <button data-view="ema">
+      <svg viewBox="0 0 24 24"><path d="M3 17c4-8 7 2 11-6s5-3 7-5"/></svg>
+      EMA
     </button>
   </nav>
 </div>
