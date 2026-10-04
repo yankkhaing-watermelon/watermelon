@@ -29,7 +29,7 @@
   let btStrat = null, btOpen = null;
   const historyCache = {};
   let filter = null, current = null, view = "list";
-  let emaSel = "20";
+  let emaSel = "20", emaSide = "both";
   let pollTimer = null, resizeTimer = null;
 
   // ------------------------------------------------------------------ theme
@@ -536,12 +536,19 @@
       return;
     }
     const k = emaSel, band = box.band_pct ?? 3, cur = latest.currency || "";
+    const side = emaSide;
     const rows = (box.stocks || [])
-      .filter((s) => s["d" + k] != null && Math.abs(s["d" + k]) <= band)
+      .filter((s) => {
+        const d = s["d" + k];
+        if (d == null || Math.abs(d) > band) return false;
+        return side === "above" ? d >= 0 : side === "below" ? d <= 0 : true;
+      })
       .sort((a, b) => Math.abs(a["d" + k]) - Math.abs(b["d" + k]));
 
+    const range = side === "above" ? `0 to +${band}%`
+      : side === "below" ? `0 to −${band}%` : `±${band}%`;
     $("ema-count").textContent =
-      `${rows.length} stock${rows.length === 1 ? "" : "s"} within ±${band}% of EMA ${k}`;
+      `${rows.length} stock${rows.length === 1 ? "" : "s"} within ${range} of EMA ${k}`;
 
     $("ema-list").innerHTML = rows.length ? rows.map((s) => {
       const d = s["d" + k], dir = d >= 0 ? "up" : "down";
@@ -558,9 +565,10 @@
           <p class="px">${cur} ${s.close}</p>
         </div>
       </div>`;
-    }).join("") : `<p class="empty">No stocks within ±${band}% of EMA ${k}.</p>`;
+    }).join("") : `<p class="empty">No stocks within ${range} of EMA ${k}.</p>`;
   }
   $("ema-select").onchange = (e) => { emaSel = e.target.value; renderEma(); };
+  $("ema-side").onchange = (e) => { emaSide = e.target.value; renderEma(); };
 
   // ------------------------------------------------------------------- nav
   function show(v) {
