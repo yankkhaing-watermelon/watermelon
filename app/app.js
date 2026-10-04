@@ -529,6 +529,7 @@
   // Independent of the six strategies: latest.ema_near is built from the whole
   // market scan, then filtered here by the selected EMA period.
   function renderEma() {
+    if (!$("ema-list") || !$("ema-count")) return;
     const box = latest && latest.ema_near;
     if (!box) {
       $("ema-count").textContent = "";
@@ -567,8 +568,12 @@
       </div>`;
     }).join("") : `<p class="empty">No stocks within ${range} of EMA ${k}.</p>`;
   }
-  $("ema-select").onchange = (e) => { emaSel = e.target.value; renderEma(); };
-  $("ema-side").onchange = (e) => { emaSide = e.target.value; renderEma(); };
+  // Null-guarded: if index.html and app.js are ever out of sync (cached shell,
+  // partial deploy) the EMA tab must degrade quietly instead of killing the
+  // whole script and leaving the app blank.
+  const emaSelEl = $("ema-select"), emaSideEl = $("ema-side");
+  if (emaSelEl) emaSelEl.onchange = (e) => { emaSel = e.target.value; renderEma(); };
+  if (emaSideEl) emaSideEl.onchange = (e) => { emaSide = e.target.value; renderEma(); };
 
   // ------------------------------------------------------------------- nav
   function show(v) {
