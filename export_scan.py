@@ -34,9 +34,6 @@ DETAIL_BARS = int(os.environ.get("DETAIL_BARS", "130"))
 SPARK_BARS = int(os.environ.get("SPARK_BARS", "20"))
 # EMA proximity tab: close within +/- this % of EMA 20 / 50 / 200.
 EMA_BAND_PCT = float(os.environ.get("EMA_BAND_PCT", "3"))
-# ...and only for stocks trading at least this much per day (median 20-day
-# close x volume, in RM). Set to 0 to disable the liquidity filter.
-EMA_MIN_TURNOVER = float(os.environ.get("EMA_MIN_TURNOVER", "500000"))
 # RSI above this is kept in the scan but flagged so the app can highlight it.
 OVERBOUGHT_RSI = float(config.STRATEGIES["trending"].get("overbought_rsi", 75))
 
@@ -196,8 +193,7 @@ def run(do_publish: bool = False) -> dict[str, Any]:
     history = {s["symbol"]: _series(by_code[s["symbol"]], DETAIL_BARS) for s in stocks}
 
     # EMA proximity list: whole market, independent of the six strategies.
-    ema_near = build_ema_near(by_code, metadata, band_pct=EMA_BAND_PCT,
-                              min_turnover=EMA_MIN_TURNOVER)
+    ema_near = build_ema_near(by_code, metadata, band_pct=EMA_BAND_PCT)
 
     now = datetime.now(timezone.utc)
     latest = {
@@ -225,7 +221,7 @@ def run(do_publish: bool = False) -> dict[str, Any]:
     if do_publish:
         _publish_files(("latest", "history"))
     print(f"Restored engine exported {len(stocks)} hits from {len(prices)} stocks; "
-          f"{ema_near['count']} liquid stocks within ±{EMA_BAND_PCT:g}% of an EMA")
+          f"{ema_near['count']} within ±{EMA_BAND_PCT:g}% of an EMA")
     return latest
 
 

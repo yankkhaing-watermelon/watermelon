@@ -25,14 +25,9 @@ def _num(value: Any, digits: int = 3) -> float | None:
 
 def build_ema_near(by_code: dict[str, pd.DataFrame],
                    metadata: dict[str, dict[str, str]],
-                   band_pct: float = 3.0,
-                   min_turnover: float = 0.0) -> dict[str, Any]:
+                   band_pct: float = 3.0) -> dict[str, Any]:
     """Scan the whole market. A stock is kept if it is within +/- band_pct of
     at least one of EMA 20/50/200. The app dropdown then picks which EMA to show.
-
-    min_turnover: minimum median daily traded value (close x volume, last 20
-    sessions, in the market currency). Drops illiquid names that sit on their
-    EMAs only because they barely trade. 0 disables the filter.
 
     Stocks with too little history for an EMA get None for that EMA and can
     never match it (so a new listing never shows under EMA 200).
@@ -47,11 +42,6 @@ def build_ema_near(by_code: dict[str, pd.DataFrame],
             close = float(last["close"])
             if not math.isfinite(close) or close <= 0:
                 continue
-            if min_turnover > 0:
-                tv = (e["close"] * e["volume"]).tail(20)
-                med = float(tv.median()) if len(tv) else 0.0
-                if not math.isfinite(med) or med < min_turnover:
-                    continue
             row: dict[str, Any] = {"symbol": sym, "close": _num(close)}
             near_any = False
             for key, col in EMA_COLS.items():
@@ -77,5 +67,4 @@ def build_ema_near(by_code: dict[str, pd.DataFrame],
             # one bad symbol must never break the scan
             continue
 
-    return {"band_pct": band_pct, "min_turnover": min_turnover,
-            "count": len(rows), "stocks": rows}
+    return {"band_pct": band_pct, "count": len(rows), "stocks": rows}
