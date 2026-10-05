@@ -1,0 +1,194 @@
+diff --git a/app/app.js b/app/app.js
+index cf0a3ce..564f0ff 100644
+--- a/app/app.js
++++ b/app/app.js
+@@ -29,7 +29,7 @@
+   let btStrat = null, btOpen = null;
+   const historyCache = {};
+   let filter = null, current = null, view = "list";
+-  let emaSel = "20";
++  let emaSel = "20", emaVal = "all", emaPx = "all";
+   let pollTimer = null, resizeTimer = null;
+ 
+   // ------------------------------------------------------------------ theme
+@@ -536,13 +536,23 @@
+       return;
+     }
+     const k = emaSel, band = box.band_pct ?? 3, cur = latest.currency || "";
+-    const rows = (box.stocks || [])
++    const all = box.stocks || [];
++    const rows = all
+       .filter((s) => s["d" + k] != null && Math.abs(s["d" + k]) <= band)
++      .filter((s) => emaValueOk(s.value))
++      .filter((s) => emaPriceOk(s.close))
+       .sort((a, b) => Math.abs(a["d" + k]) - Math.abs(b["d" + k]));
+ 
++    const tags = [];
++    if (emaVal !== "all") tags.push($("ema-value").selectedOptions[0].textContent);
++    if (emaPx !== "all") tags.push($("ema-price").selectedOptions[0].textContent);
+     $("ema-count").textContent =
+-      `${rows.length} stock${rows.length === 1 ? "" : "s"} within ±${band}% of EMA ${k}`;
++      `${rows.length} stock${rows.length === 1 ? "" : "s"} within ±${band}% of EMA ${k}` +
++      (tags.length ? " · " + tags.join(" · ") : "");
+ 
++    // Payloads from before this feature have no traded value; say so instead of
++    // silently showing an empty list.
++    const noValueData = emaVal !== "all" && all.length && all.every((s) => s.value == null);
+     $("ema-list").innerHTML = rows.length ? rows.map((s) => {
+       const d = s["d" + k], dir = d >= 0 ? "up" : "down";
+       const day = s.change_pct > 0 ? "+" + s.change_pct : s.change_pct;
+@@ -551,16 +561,39 @@
+         <div class="row-mid">
+           <p class="name">${esc(s.symbol)}</p>
+           ${s.name ? `<p class="co">${esc(s.name)}</p>` : ""}
+-          <p class="sub">EMA ${k} ${s["ema" + k]} · Day ${day}%</p>
++          <p class="sub">EMA ${k} ${s["ema" + k]} · Day ${day}%${s.value != null ? " · Val " + fmtRM(s.value) : ""}</p>
+         </div>
+         <div class="row-end">
+           <p class="chg ${dir}">${d > 0 ? "+" : ""}${d}%</p>
+           <p class="px">${cur} ${s.close}</p>
+         </div>
+       </div>`;
+-    }).join("") : `<p class="empty">No stocks within ±${band}% of EMA ${k}.</p>`;
++    }).join("") : `<p class="empty">${noValueData
++      ? "Traded value isn't in this scan yet. Run a new scan to use the value filter."
++      : `No stocks within ±${band}% of EMA ${k} for the selected filters.`}</p>`;
++  }
++  // Daily traded value (ringgit): under 500k / 500k to under 1M / 1M and above.
++  function emaValueOk(v) {
++    if (emaVal === "all") return true;
++    if (v == null) return false;
++    return emaVal === "low" ? v < 500000
++         : emaVal === "mid" ? v >= 500000 && v < 1000000
++         : v >= 1000000;
++  }
++  // Price: below RM0.10 / RM0.10 and above (0.10 itself counts as "and above").
++  function emaPriceOk(px) {
++    if (emaPx === "all") return true;
++    if (px == null) return false;
++    return emaPx === "penny" ? px < 0.1 : px >= 0.1;
++  }
++  function fmtRM(v) {
++    return v >= 1e6 ? "RM" + (v / 1e6).toFixed(2) + "M"
++         : v >= 1e3 ? "RM" + Math.round(v / 1e3) + "k"
++         : "RM" + Math.round(v);
+   }
+   $("ema-select").onchange = (e) => { emaSel = e.target.value; renderEma(); };
++  $("ema-value").onchange = (e) => { emaVal = e.target.value; renderEma(); };
++  $("ema-price").onchange = (e) => { emaPx = e.target.value; renderEma(); };
+ 
+   // ------------------------------------------------------------------- nav
+   function show(v) {
+diff --git a/app/index.html b/app/index.html
+index 5420ef4..0431d01 100644
+--- a/app/index.html
++++ b/app/index.html
+@@ -177,7 +177,9 @@ html[data-theme="dark"] .v-warn{color:#e0a94a}
+ .disclaimer{font-size:11px;color:var(--faint);padding:4px 0 18px;line-height:1.55}
+ 
+ /* EMA proximity tab */
+-.ema-select{width:100%;margin:0 0 10px;padding:10px 12px;border-radius:var(--radius);
++.ema-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 10px}
++.ema-filters .ema-select:first-child{grid-column:1/-1}
++.ema-select{width:100%;padding:10px 12px;border-radius:var(--radius);
+   border:.5px solid var(--line);background:var(--card);color:var(--text);
+   font:inherit;font-size:14px;font-weight:600}
+ 
+@@ -282,11 +284,24 @@ nav svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;
+ 
+     <!-- ============ EMA proximity view ============ -->
+     <section id="view-ema" hidden>
+-      <select id="ema-select" class="ema-select" aria-label="EMA period">
+-        <option value="20">EMA 20</option>
+-        <option value="50">EMA 50</option>
+-        <option value="200">EMA 200</option>
+-      </select>
++      <div class="ema-filters">
++        <select id="ema-select" class="ema-select" aria-label="EMA period">
++          <option value="20">EMA 20</option>
++          <option value="50">EMA 50</option>
++          <option value="200">EMA 200</option>
++        </select>
++        <select id="ema-value" class="ema-select" aria-label="Daily traded value">
++          <option value="all">Value: All</option>
++          <option value="low">Under RM500k</option>
++          <option value="mid">RM500k – RM1M</option>
++          <option value="high">RM1M and above</option>
++        </select>
++        <select id="ema-price" class="ema-select" aria-label="Share price">
++          <option value="all">Price: All</option>
++          <option value="penny">Below RM0.10</option>
++          <option value="normal">RM0.10 and above</option>
++        </select>
++      </div>
+       <p class="meta" id="ema-count"></p>
+       <div class="scroller" style="max-height:calc(100dvh - 260px)"><div id="ema-list"></div></div>
+     </section>
+diff --git a/app/sw.js b/app/sw.js
+index 10fc009..93b30bd 100644
+--- a/app/sw.js
++++ b/app/sw.js
+@@ -10,7 +10,7 @@
+  *      whole install and leaves the PREVIOUS worker in charge. Add files
+  *      individually and tolerate misses.
+  */
+-const CACHE = "bmk-shell-v61";
++const CACHE = "bmk-shell-v62";
+ const SHELL = ["./", "./index.html", "./app.js", "./charts.js", "./config.js",
+                "./manifest.json"];
+ 
+diff --git a/ema_near.py b/ema_near.py
+index 2789598..3aabc9f 100644
+--- a/ema_near.py
++++ b/ema_near.py
+@@ -43,6 +43,14 @@ def build_ema_near(by_code: dict[str, pd.DataFrame],
+             if not math.isfinite(close) or close <= 0:
+                 continue
+             row: dict[str, Any] = {"symbol": sym, "close": _num(close)}
++            # Today's traded value in currency (close x volume of the last bar).
++            # Deliberately NOT a 20-day average: the app's liquidity dropdown
++            # buckets on what actually traded on the scan day.
++            try:
++                value = close * float(last["volume"])
++            except (KeyError, TypeError, ValueError):
++                value = float("nan")
++            row["value"] = round(value) if math.isfinite(value) and value >= 0 else None
+             near_any = False
+             for key, col in EMA_COLS.items():
+                 ema = float(last[col]) if col in e.columns else float("nan")
+diff --git a/test_ema_near.py b/test_ema_near.py
+new file mode 100644
+index 0000000..c43a08d
+--- /dev/null
++++ b/test_ema_near.py
+@@ -0,0 +1,30 @@
++"""EMA tab: build_ema_near exports the scan day's traded value (close x volume)."""
++import numpy as np
++import pandas as pd
++
++from ema_near import build_ema_near
++
++
++def _frame(price: float, volume: float, n: int = 260) -> pd.DataFrame:
++    idx = pd.bdate_range(end="2026-10-02", periods=n)
++    close = np.full(n, price)  # flat -> every EMA equals price -> distance 0%
++    return pd.DataFrame({"open": close, "high": close, "low": close,
++                         "close": close, "volume": np.full(n, volume)}, index=idx)
++
++
++def test_value_is_todays_close_times_volume():
++    out = build_ema_near({"AAA": _frame(0.5, 2_000_000)}, {})
++    assert out["count"] == 1
++    assert out["stocks"][0]["value"] == 1_000_000
++
++
++def test_value_is_not_a_20_day_average():
++    f = _frame(1.0, 100_000)
++    f.iloc[-1, f.columns.get_loc("volume")] = 3_000_000  # spike on scan day only
++    out = build_ema_near({"BBB": f}, {})
++    assert out["stocks"][0]["value"] == 3_000_000
++
++
++def test_zero_volume_gives_zero_value():
++    out = build_ema_near({"CCC": _frame(0.2, 0)}, {})
++    assert out["stocks"][0]["value"] == 0
