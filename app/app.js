@@ -29,7 +29,7 @@
   let btStrat = null, btOpen = null;
   const historyCache = {};
   let filter = null, current = null, view = "list";
-  let emaSel = "20";
+  let emaSel = "20", emaVal = "all", emaPx = "all";
   let pollTimer = null, resizeTimer = null;
 
   // ------------------------------------------------------------------ theme
@@ -536,13 +536,23 @@
       return;
     }
     const k = emaSel, band = box.band_pct ?? 3, cur = latest.currency || "";
-    const rows = (box.stocks || [])
+    const all = box.stocks || [];
+    const rows = all
       .filter((s) => s["d" + k] != null && Math.abs(s["d" + k]) <= band)
+      .filter((s) => emaValueOk(s.value))
+      .filter((s) => emaPriceOk(s.close))
       .sort((a, b) => Math.abs(a["d" + k]) - Math.abs(b["d" + k]));
 
+    const tags = [];
+    if (emaVal !== "all") tags.push($("ema-value").selectedOptions[0].textContent);
+    if (emaPx !== "all") tags.push($("ema-price").selectedOptions[0].textContent);
     $("ema-count").textContent =
-      `${rows.length} stock${rows.length === 1 ? "" : "s"} within ±${band}% of EMA ${k}`;
+      `${rows.length} stock${rows.length === 1 ? "" : "s"} within ±${band}% of EMA ${k}` +
+      (tags.length ? " · " + tags.join(" · ") : "");
 
+    // Payloads from before this feature have no traded value; say so instead of
+    // silently showing an empty list.
+    const noValueData = emaVal !== "all" && all.length && all.every((s) => s.value == null);
     $("ema-list").innerHTML = rows.length ? rows.map((s) => {
       const d = s["d" + k], dir = d >= 0 ? "up" : "down";
       const day = s.change_pct > 0 ? "+" + s.change_pct : s.change_pct;
@@ -551,16 +561,39 @@
         <div class="row-mid">
           <p class="name">${esc(s.symbol)}</p>
           ${s.name ? `<p class="co">${esc(s.name)}</p>` : ""}
-          <p class="sub">EMA ${k} ${s["ema" + k]} · Day ${day}%</p>
+          <p class="sub">EMA ${k} ${s["ema" + k]} · Day ${day}%${s.value != null ? " · Val " + fmtRM(s.value) : ""}</p>
         </div>
         <div class="row-end">
           <p class="chg ${dir}">${d > 0 ? "+" : ""}${d}%</p>
           <p class="px">${cur} ${s.close}</p>
         </div>
       </div>`;
-    }).join("") : `<p class="empty">No stocks within ±${band}% of EMA ${k}.</p>`;
+    }).join("") : `<p class="empty">${noValueData
+      ? "Traded value isn't in this scan yet. Run a new scan to use the value filter."
+      : `No stocks within ±${band}% of EMA ${k} for the selected filters.`}</p>`;
+  }
+  // Daily traded value (ringgit): under 500k / 500k to under 1M / 1M and above.
+  function emaValueOk(v) {
+    if (emaVal === "all") return true;
+    if (v == null) return false;
+    return emaVal === "low" ? v < 500000
+         : emaVal === "mid" ? v >= 500000 && v < 1000000
+         : v >= 1000000;
+  }
+  // Price: below RM0.10 / RM0.10 and above (0.10 itself counts as "and above").
+  function emaPriceOk(px) {
+    if (emaPx === "all") return true;
+    if (px == null) return false;
+    return emaPx === "penny" ? px < 0.1 : px >= 0.1;
+  }
+  function fmtRM(v) {
+    return v >= 1e6 ? "RM" + (v / 1e6).toFixed(2) + "M"
+         : v >= 1e3 ? "RM" + Math.round(v / 1e3) + "k"
+         : "RM" + Math.round(v);
   }
   $("ema-select").onchange = (e) => { emaSel = e.target.value; renderEma(); };
+  $("ema-value").onchange = (e) => { emaVal = e.target.value; renderEma(); };
+  $("ema-price").onchange = (e) => { emaPx = e.target.value; renderEma(); };
 
   // ------------------------------------------------------------------- nav
   function show(v) {

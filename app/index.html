@@ -177,7 +177,9 @@ html[data-theme="dark"] .v-warn{color:#e0a94a}
 .disclaimer{font-size:11px;color:var(--faint);padding:4px 0 18px;line-height:1.55}
 
 /* EMA proximity tab */
-.ema-select{width:100%;margin:0 0 10px;padding:10px 12px;border-radius:var(--radius);
+.ema-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 10px}
+.ema-filters .ema-select:first-child{grid-column:1/-1}
+.ema-select{width:100%;padding:10px 12px;border-radius:var(--radius);
   border:.5px solid var(--line);background:var(--card);color:var(--text);
   font:inherit;font-size:14px;font-weight:600}
 
@@ -282,11 +284,24 @@ nav svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;
 
     <!-- ============ EMA proximity view ============ -->
     <section id="view-ema" hidden>
-      <select id="ema-select" class="ema-select" aria-label="EMA period">
-        <option value="20">EMA 20</option>
-        <option value="50">EMA 50</option>
-        <option value="200">EMA 200</option>
-      </select>
+      <div class="ema-filters">
+        <select id="ema-select" class="ema-select" aria-label="EMA period">
+          <option value="20">EMA 20</option>
+          <option value="50">EMA 50</option>
+          <option value="200">EMA 200</option>
+        </select>
+        <select id="ema-value" class="ema-select" aria-label="Daily traded value">
+          <option value="all">Value: All</option>
+          <option value="low">Under RM500k</option>
+          <option value="mid">RM500k – RM1M</option>
+          <option value="high">RM1M and above</option>
+        </select>
+        <select id="ema-price" class="ema-select" aria-label="Share price">
+          <option value="all">Price: All</option>
+          <option value="penny">Below RM0.10</option>
+          <option value="normal">RM0.10 and above</option>
+        </select>
+      </div>
       <p class="meta" id="ema-count"></p>
       <div class="scroller" style="max-height:calc(100dvh - 260px)"><div id="ema-list"></div></div>
     </section>
