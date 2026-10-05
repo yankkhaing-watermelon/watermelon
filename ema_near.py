@@ -43,6 +43,14 @@ def build_ema_near(by_code: dict[str, pd.DataFrame],
             if not math.isfinite(close) or close <= 0:
                 continue
             row: dict[str, Any] = {"symbol": sym, "close": _num(close)}
+            # Today's traded value in currency (close x volume of the last bar).
+            # Deliberately NOT a 20-day average: the app's liquidity dropdown
+            # buckets on what actually traded on the scan day.
+            try:
+                value = close * float(last["volume"])
+            except (KeyError, TypeError, ValueError):
+                value = float("nan")
+            row["value"] = round(value) if math.isfinite(value) and value >= 0 else None
             near_any = False
             for key, col in EMA_COLS.items():
                 ema = float(last[col]) if col in e.columns else float("nan")
