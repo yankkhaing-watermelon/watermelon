@@ -2825,7 +2825,11 @@ date,symbol,strategy,close,score,first_seen,appearances,active,is_new
 2026-10-15,DIALOG,reversal,1.95,,2026-10-15,1,0,True
 2026-10-15,SIMEPROP,reversal,1.28,,2026-10-14,2,0,False
 2026-10-15,GASMSIA,reversal,5.15,,2026-10-06,8,0,False
-2026-10-16,PBBANK,reversal,4.83,,2026-10-16,1,1,True
-2026-10-16,KLCC,reversal,9.22,,2026-10-16,1,1,True
-2026-10-16,GASMSIA,reversal,5.18,,2026-10-06,9,1,False
-2026-10-16,SIMEPROP,reversal,1.28,,2026-10-14,3,1,False
+2026-10-16,PBBANK,reversal,4.83,,2026-10-16,1,0,True
+2026-10-16,KLCC,reversal,9.22,,2026-10-16,1,0,True
+2026-10-16,GASMSIA,reversal,5.18,,2026-10-06,9,0,False
+2026-10-16,SIMEPROP,reversal,1.28,,2026-10-14,3,0,False
+2026-10-18,PBBANK,reversal,4.83,,2026-10-16,2,1,False
+2026-10-18,KLCC,reversal,9.22,,2026-10-16,2,1,False
+2026-10-18,GASMSIA,reversal,5.18,,2026-10-06,10,1,False
+2026-10-18,SIMEPROP,reversal,1.28,,2026-10-14,4,1,False
