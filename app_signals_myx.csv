@@ -2839,6 +2839,9 @@ date,symbol,strategy,close,score,first_seen,appearances,active,is_new
 2026-10-20,DIALOG,reversal,1.95,,2026-10-20,1,0,True
 2026-10-20,MAG,reversal,0.16,,2026-10-20,1,0,True
 2026-10-20,SIMEPROP,reversal,1.27,,2026-10-14,6,0,False
-2026-10-21,GASMSIA,reversal,5.2,,2026-10-06,13,1,False
-2026-10-21,DIALOG,reversal,1.96,,2026-10-20,2,1,False
-2026-10-21,EMETALL,reversal,0.445,,2026-10-21,1,1,True
+2026-10-21,GASMSIA,reversal,5.2,,2026-10-06,13,0,False
+2026-10-21,DIALOG,reversal,1.96,,2026-10-20,2,0,False
+2026-10-21,EMETALL,reversal,0.445,,2026-10-21,1,0,True
+2026-10-21,GASMSIA,reversal,5.2,,2026-10-06,14,1,False
+2026-10-21,DIALOG,reversal,1.96,,2026-10-20,3,1,False
+2026-10-21,EMETALL,reversal,0.445,,2026-10-21,2,1,False
