@@ -2842,6 +2842,14 @@ date,symbol,strategy,close,score,first_seen,appearances,active,is_new
 2026-10-21,GASMSIA,reversal,5.2,,2026-10-06,13,0,False
 2026-10-21,DIALOG,reversal,1.96,,2026-10-20,2,0,False
 2026-10-21,EMETALL,reversal,0.445,,2026-10-21,1,0,True
-2026-10-21,GASMSIA,reversal,5.2,,2026-10-06,14,1,False
-2026-10-21,DIALOG,reversal,1.96,,2026-10-20,3,1,False
-2026-10-21,EMETALL,reversal,0.445,,2026-10-21,2,1,False
+2026-10-21,GASMSIA,reversal,5.2,,2026-10-06,14,0,False
+2026-10-21,DIALOG,reversal,1.96,,2026-10-20,3,0,False
+2026-10-21,EMETALL,reversal,0.445,,2026-10-21,2,0,False
+2026-10-22,TMK,reversal,2.91,,2026-10-22,1,1,True
+2026-10-22,DIALOG,reversal,2.06,,2026-10-20,4,1,False
+2026-10-22,AEON,reversal,0.965,,2026-10-22,1,1,True
+2026-10-22,MAG,reversal,0.16,,2026-10-22,1,1,True
+2026-10-22,TENAGA,reversal,13.24,,2026-10-22,1,1,True
+2026-10-22,GASMSIA,reversal,5.23,,2026-10-06,15,1,False
+2026-10-22,ARMADA,reversal,0.34,,2026-10-22,1,1,True
+2026-10-22,UOADEV,reversal,1.55,,2026-10-22,1,1,True
