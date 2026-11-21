@@ -138,7 +138,11 @@ RELATIVE = {
     #                  returned zero matches on five of six screeners.
     #   "off"        — gate never blocks; absolute rules alone decide.
     "regime_ma_column": "ema200",
-    "regime_mode": "percentile",
+    # "off": the breadth gate never blocks, so trending names still surface when
+    # the wider market is soft. Per-screener `rs_rank_min` floors still apply, so
+    # only relative leaders get through. Breadth is still computed and logged for
+    # inspection. To restore the gate set this back to "percentile".
+    "regime_mode": "off",
     "regime_percentile": 35.0,       # breadth must beat its 35th pct of history
     "regime_lookback_bars": 504,     # ~2 years of sessions for that quantile
     "regime_min_bars": 120,          # below this, leave the gate undecided (NA)

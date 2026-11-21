@@ -149,3 +149,28 @@ def test_diagnostics_are_published():
     d = relative.LAST_DIAGNOSTICS
     for key in ("mode", "breadth_pct", "regime_ok", "universe_symbols"):
         assert key in d, key
+
+
+def test_regime_off_never_blocks_even_in_a_weak_market():
+    """Gate off: weak breadth must NOT stand any screener down.
+
+    Breadth is still computed for diagnostics, but regime_ok stays NA, which the
+    screener treats as 'abstain' rather than 'no'.
+    """
+    weak = {f"S{k}": _frame([10.0] * 50, ema200=[11.0] * 50) for k in range(20)}
+    relative.attach_regime(weak, smooth_bars=1, mode="off")
+    df = weak["S0"]
+    assert df["breadth_pct"].iloc[-1] == 0.0          # market really is weak
+    assert pd.isna(df["regime_ok"].iloc[-1])          # ...but the gate is undecided
+    assert screener._context_ok(df, 49, {"require_market_regime": True}) is True
+
+
+def test_rs_floor_still_applies_when_regime_is_off():
+    """Switching the gate off must not also switch off the relative-strength floor."""
+    df = _frame([10.0] * 30)
+    df["regime_ok"] = pd.Series(pd.NA, index=df.index, dtype="boolean")
+    df["rs_rank"] = 20.0
+    p = {"require_market_regime": True, "rs_rank_min": 60}
+    assert screener._context_ok(df, 29, p) is False    # laggard still rejected
+    df["rs_rank"] = 90.0
+    assert screener._context_ok(df, 29, p) is True     # leader passes
