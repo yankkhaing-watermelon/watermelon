@@ -162,7 +162,7 @@ STRATEGIES = {
         "enabled": True,
         "require_market_regime": True,   # stand down when breadth is weak
         "rs_rank_min": 60,               # bottom 60% of the market is not a leader
-        "adx_min": 25,              # trend strength
+        "adx_min": 20,              # trend strength
         "rsi_min": 50,
         "rsi_max": 100,             # no upper cap: RSI > 75 stays in Trending
         "overbought_rsi": 75,       # ...but is flagged `overbought` in the app
@@ -251,7 +251,7 @@ STRATEGIES = {
         "return_min_pct": 15.0,          #   advance before the recent window
 
         # --- still buyable, not chasing
-        "max_extension_ema20": 1.08,     # reject if 8%+ above EMA20
+        "max_extension_ema20": 1.15,     # reject if 8%+ above EMA20
         "require_above_fast_ma": True,   # EMA10 if present, else EMA20
 
         # --- institutional footprint, searched across a window
